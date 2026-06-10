@@ -1,0 +1,6 @@
+{
+  "name": "Coastal Haven",
+  "description": "Aplicativo de turismo e serviços locais em Porto de Galinhas, conectando turistas, empreendedores e administradores.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

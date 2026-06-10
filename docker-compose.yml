@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: postgres-ConectaPraia
+    environment:
+      POSTGRES_DB: ConectaPraia_db
+      POSTGRES_USER: Qdop
+      POSTGRES_PASSWORD: Qdop123
+    ports:
+      - "5432:5432"
+    healthcheck: # <--- Adicione este bloco
+      test: [ "CMD-SHELL", "pg_isready -U Qdop -d ConectaPraia_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: spring-app-ConectaPraia
+    ports:
+      - "8080:8080"
+      - "5432:5432"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DB_HOST=db
+      - DB_NAME=ConectaPraia_db
+      - DB_USER=Qdop
+      - DB_PASS=Qdop123
+      - JWT_SECRET=${JWT_SECRET}
+
