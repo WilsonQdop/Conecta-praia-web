@@ -15,7 +15,6 @@ public class Registered {
     @JoinColumn(name = "turista_id")
     private Tourist tourist;
 
-    // Colunas distintas para evitar o conflito
     @ManyToOne
     @JoinColumn(name = "post_service_id")
     private PostsService postService;

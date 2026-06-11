@@ -8,8 +8,10 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record CreatePostEventResponseDTO(
+        UUID id,
         @NotBlank
         String title,
         @NotBlank

@@ -2,6 +2,7 @@ package br.com.uninassau.LEI.ConectaPraia.domain;
 
 import br.com.uninassau.LEI.ConectaPraia.domain.enums.TypeService;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,7 +34,8 @@ public class PostsService {
     private String location;
     private LocalDateTime dateHour;
     private BigDecimal value;
-    private String valueDescription;   // "+ prancha", "aula + prancha"
+    private String valueDescription;// "+ prancha", "aula + prancha"
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
     private LocalDateTime createdAt;
 

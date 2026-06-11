@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/subscriptions")
-@PreAuthorize("hasRole('EMPREENDEDOR')")
+@PreAuthorize("hasRole('TURISTA')")
 public class TouristController {
 
     private final TouristService touristService;

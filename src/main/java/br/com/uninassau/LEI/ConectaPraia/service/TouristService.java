@@ -1,33 +1,30 @@
 package br.com.uninassau.LEI.ConectaPraia.service;
 
-import br.com.uninassau.LEI.ConectaPraia.domain.PostsEvent;
-import br.com.uninassau.LEI.ConectaPraia.domain.PostsService;
-import br.com.uninassau.LEI.ConectaPraia.domain.Registered;
-import br.com.uninassau.LEI.ConectaPraia.domain.Tourist;
+import br.com.uninassau.LEI.ConectaPraia.domain.*;
+import br.com.uninassau.LEI.ConectaPraia.dto.PostEventResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.dto.TouristSubscribeResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.repositories.PostEventRepository;
 import br.com.uninassau.LEI.ConectaPraia.repositories.PostServiceRepository;
 import br.com.uninassau.LEI.ConectaPraia.repositories.RegisteredRepository;
-import br.com.uninassau.LEI.ConectaPraia.repositories.TouristRepository;
 import br.com.uninassau.LEI.ConectaPraia.utils.AuthUtil;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class TouristService {
 
-    private final TouristRepository touristRepository;
     private final PostServiceRepository postServiceRepository;
     private final PostEventRepository postEventRepository;
     private final AuthUtil authUtil;
     private final RegisteredRepository registeredRepository;
 
-    public TouristService(TouristRepository touristRepository, PostServiceRepository postServiceRepository,
+    public TouristService( PostServiceRepository postServiceRepository,
                           PostEventRepository postEventRepository, AuthUtil authUtil, RegisteredRepository registeredRepository) {
-        this.touristRepository = touristRepository;
         this.postServiceRepository = postServiceRepository;
         this.postEventRepository = postEventRepository;
         this.authUtil = authUtil;
@@ -47,12 +44,10 @@ public class TouristService {
 
         this.registeredRepository.save(subscription);
 
-        // 5. Retorno
         return new TouristSubscribeResponseDTO(tourist.getName(), service.getTitle());
     }
 
     public TouristSubscribeResponseDTO subscribeToEvent(UUID eventId) {
-
         Tourist tourist = (Tourist) this.authUtil.getUserLoggedIn();
 
         PostsEvent event = this.postEventRepository.findById(eventId)
@@ -67,4 +62,5 @@ public class TouristService {
 
         return new TouristSubscribeResponseDTO(tourist.getName(), event.getTitle());
     }
+
 }

@@ -1,31 +1,22 @@
 package br.com.uninassau.LEI.ConectaPraia.dto;
 
 import br.com.uninassau.LEI.ConectaPraia.domain.enums.TypeService;
-import jakarta.persistence.Column;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record CreatePostServiceResponseDTO(
+public record PostServiceResponseDTO(
         UUID id,
-        @NotBlank
         String title,
-        @NotBlank
         TypeService serviceType,
-        @NotBlank
         String location,
-        @NotBlank
-        @Size(max = 5000)
         BigDecimal value,
-        @NotBlank
         String valueDescription,
         String imageUrl,
-        @NotBlank
-        @Column(columnDefinition = "TEXT")
         String description,
         LocalDateTime createdAt,
-        LocalDateTime dateHour) {
-}
+        LocalDateTime dateHour,
+        String entrepreneurName,     // ← NOVO
+        UUID entrepreneurId          // ← NOVO
+) {}

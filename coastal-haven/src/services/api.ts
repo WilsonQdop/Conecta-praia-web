@@ -14,12 +14,16 @@ const apiClient: AxiosInstance = axios.create({
 // Interceptor para adicionar token JWT nas requisições
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
+  console.log('[INTERCEPTOR] URL:', config.url);
+  console.log('[INTERCEPTOR] Token existe?', !!token);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log('[INTERCEPTOR] Authorization header setado');
+  } else {
+    console.log('[INTERCEPTOR] ⚠️ NENHUM TOKEN ENCONTRADO!');
   }
   return config;
 });
-
 // ═══════════════════════════════════════════════════════════════
 // 🔐 AUTH SERVICES
 // ═══════════════════════════════════════════════════════════════
@@ -278,6 +282,284 @@ export const uploadService = {
       throw error;
     }
   },
+};
+
+// src/services/api.ts - ADICIONAR estas interfaces e methods
+
+// ═══════════════════════════════════════════════════════════════════════
+// 📋 INTERFACES (DTOs)
+// ═══════════════════════════════════════════════════════════════════════
+
+export interface PostServiceResponseDTO {
+  id: string;
+  title: string;
+  serviceType: string;
+  location: string;
+  value: number;
+  valueDescription: string;
+  imageUrl?: string;
+  description: string;
+  createdAt: string;
+  dateHour: string;
+  entrepreneurName: string;
+  entrepreneurId: string;
+}
+
+export interface PostEventResponseDTO {
+  id: string;
+  title: string;
+  eventType: string;
+  location: string;
+  value: number;
+  valueDescription: string;
+  imageUrl?: string;
+  description: string;
+  createdAt: string;
+  dateHour: string;
+  entrepreneurName: string;
+  entrepreneurId: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// 🔽 SERVICES
+// ═══════════════════════════════════════════════════════════════════════
+
+export const postServiceService = {
+  /**
+   * Meus serviços (do empreendedor logado)
+   */
+  async getMyServices(): Promise<PostServiceResponseDTO[]> {
+    try {
+      console.log('[API] GET /postService/my-services');
+      const response = await apiClient.get<PostServiceResponseDTO[]>(
+        '/postService/my-services'
+      );
+      console.log('[API] ✅ Encontrados ' + response.data.length + ' serviços');
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar meus serviços:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Todos os serviços (de todos os empreendedores)
+   */
+  async getAllServices(): Promise<PostServiceResponseDTO[]> {
+    try {
+      console.log('[API] GET /postService/all-services');
+      const response = await apiClient.get<PostServiceResponseDTO[]>(
+        '/postService/all-services'
+      );
+      console.log('[API] ✅ Total de serviços: ' + response.data.length);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar serviços:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Serviços por tipo (RESTAURANTE, BAR, AUTONOMO, GERAL)
+   */
+  async getServicesByType(serviceType: string): Promise<PostServiceResponseDTO[]> {
+    try {
+      console.log('[API] GET /postService/services-by-type/' + serviceType);
+      const response = await apiClient.get<PostServiceResponseDTO[]>(
+        `/postService/services-by-type/${serviceType}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar serviços por tipo:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Serviços por localização
+   */
+  async getServicesByLocation(location: string): Promise<PostServiceResponseDTO[]> {
+    try {
+      console.log('[API] GET /postService/services-by-location?location=' + location);
+      const response = await apiClient.get<PostServiceResponseDTO[]>(
+        '/postService/services-by-location',
+        { params: { location } }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar serviços por localização:', error);
+      throw error;
+    }
+  },
+};
+
+export const postEventService = {
+  /**
+   * Meus eventos (do empreendedor logado)
+   */
+  async getMyEvents(): Promise<PostEventResponseDTO[]> {
+    try {
+      console.log('[API] GET /postEvent/my-events');
+      const response = await apiClient.get<PostEventResponseDTO[]>(
+        '/postEvent/my-events'
+      );
+      console.log('[API] ✅ Encontrados ' + response.data.length + ' eventos');
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar meus eventos:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Todos os eventos (de todos os empreendedores)
+   */
+  async getAllEvents(): Promise<PostEventResponseDTO[]> {
+    try {
+      console.log('[API] GET /postEvent/all-events');
+      const response = await apiClient.get<PostEventResponseDTO[]>(
+        '/postEvent/all-events'
+      );
+      console.log('[API] ✅ Total de eventos: ' + response.data.length);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar eventos:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Eventos por tipo (SURF, MUSICA, TRILHA, GERAL)
+   */
+  async getEventsByType(eventType: string): Promise<PostEventResponseDTO[]> {
+    try {
+      console.log('[API] GET /postEvent/events-by-type/' + eventType);
+      const response = await apiClient.get<PostEventResponseDTO[]>(
+        `/postEvent/events-by-type/${eventType}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar eventos por tipo:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Eventos por localização
+   */
+  async getEventsByLocation(location: string): Promise<PostEventResponseDTO[]> {
+    try {
+      console.log('[API] GET /postEvent/events-by-location?location=' + location);
+      const response = await apiClient.get<PostEventResponseDTO[]>(
+        '/postEvent/events-by-location',
+        { params: { location } }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar eventos por localização:', error);
+      throw error;
+    }
+  },
+};
+
+// src/services/api.ts - ADICIONAR estes services
+
+// ═══════════════════════════════════════════════════════════════════════
+// 🛡️ ADMIN SERVICES - Apenas para administradores
+// ═══════════════════════════════════════════════════════════════════════
+
+export const adminService = {
+  /**
+   * Visualizar TODOS os serviços (de todos os empreendedores)
+   * Apenas admin pode acessar
+   */
+  async getAllServices(): Promise<PostServiceResponseDTO[]> {
+    try {
+      console.log('[API] GET /admin/all-services');
+      const response = await apiClient.get<PostServiceResponseDTO[]>(
+        '/admin/all-services'
+      );
+      console.log('[API] ✅ Total de serviços: ' + response.data.length);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar todos os serviços:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Visualizar TODOS os eventos (de todos os empreendedores)
+   * Apenas admin pode acessar
+   */
+  async getAllEvents(): Promise<PostEventResponseDTO[]> {
+    try {
+      console.log('[API] GET /admin/all-events');
+      const response = await apiClient.get<PostEventResponseDTO[]>(
+        '/admin/all-events'
+      );
+      console.log('[API] ✅ Total de eventos: ' + response.data.length);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar todos os eventos:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Buscar atividades de um empreendedor específico
+   */
+  async getEntrepreneurActivities(entrepreneurId: string): Promise<{
+    services: PostServiceResponseDTO[];
+    events: PostEventResponseDTO[];
+  }> {
+    try {
+      console.log('[API] GET /admin/entrepreneur/' + entrepreneurId);
+      
+      const services = await this.getAllServices();
+      const events = await this.getAllEvents();
+      
+      const entrepreneurServices = services.filter(s => s.entrepreneurId === entrepreneurId);
+      const entrepreneurEvents = events.filter(e => e.entrepreneurId === entrepreneurId);
+      
+      return {
+        services: entrepreneurServices,
+        events: entrepreneurEvents
+      };
+    } catch (error) {
+      console.error('Erro ao buscar atividades do empreendedor:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Contar total de atividades no sistema
+   */
+  async getStatistics(): Promise<{
+    totalServices: number;
+    totalEvents: number;
+    totalEntrepreneurs: number;
+    totalUsers: number;
+  }> {
+    try {
+      const services = await this.getAllServices();
+      const events = await this.getAllEvents();
+      
+      const uniqueEntrepreneurs = new Set([
+        ...services.map(s => s.entrepreneurId),
+        ...events.map(e => e.entrepreneurId)
+      ]).size;
+      
+      return {
+        totalServices: services.length,
+        totalEvents: events.length,
+        totalEntrepreneurs: uniqueEntrepreneurs,
+        totalUsers: uniqueEntrepreneurs // Pode ser expandido depois
+      };
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+      throw error;
+    }
+  }
 };
 
 export default apiClient;

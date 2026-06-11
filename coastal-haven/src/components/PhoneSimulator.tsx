@@ -7,12 +7,14 @@ import { motion, AnimatePresence } from 'motion/react';
 import { LucideIcon } from './LucideIcon';
 import { AppState, UserRole, LocalActivity, Appointment, Review } from '../types';
 import { WelcomeScreen, LoginScreen, RegisterScreen, RoleSelectScreen } from './OnboardingScreens';
+
 import { TouristSearchScreen, InteractiveMapScreen, EventDetailScreen, ServiceDetailScreen, RatingModal, AppointmentsScreen, EventsAndServicesScreen } from './TouristScreens';
-import { EntrepreneurProfileScreen, ReviewsManagementScreen } from './EntrepreneurScreens';
-import { AdminProfileScreen } from './AdminScreens';
+import { EntrepreneurProfileScreen, ReviewsManagementScreen, EntrepreneurServicesScreen } from './EntrepreneurScreens';
+import { AdminAllActivitiesScreen, AdminProfileScreen } from './AdminScreens';
 import { CreateActivityScreen } from './CreateActivityScreen';
 import { IMAGES, ACTIVITIES, INITIAL_REVIEWS, INITIAL_APPOINTMENTS } from '../data';
 import { authService, eventService, serviceService, reviewService, subscriptionService } from '../services/api';
+import { response } from 'express';
 
 export const PhoneSimulator: React.FC = () => {
   const [state, setState] = useState<AppState>({
@@ -20,6 +22,7 @@ export const PhoneSimulator: React.FC = () => {
     isLoggedIn: false,
     currentUserEmail: '',
     currentScreen: 'welcome', 
+    currentUserName: '',
     selectedActivityId: null,
     ratingModalType: null,
     reviews: INITIAL_REVIEWS,
@@ -37,6 +40,8 @@ export const PhoneSimulator: React.FC = () => {
     const token = localStorage.getItem('token');
     const userEmail = localStorage.getItem('userEmail');
     const userRole = localStorage.getItem('userRole');
+    const userName = localStorage.getItem('userName');
+    
 
     console.log('[SESSION] Verificando sessão anterior...');
 
@@ -52,7 +57,8 @@ export const PhoneSimulator: React.FC = () => {
         isLoggedIn: true,
         currentUserEmail: userEmail,
         currentRole: mappedRole,
-        currentScreen: nextScreen
+        currentScreen: nextScreen,
+        currentUserName: userName || '',
       }));
     } else {
       console.log('[SESSION] Nenhuma sessão anterior');
@@ -147,19 +153,20 @@ export const PhoneSimulator: React.FC = () => {
   // ════════════════════════════════════════════════════════════════
   // ✅ LOGIN - COM ROUTING AUTOMÁTICO POR ROLE
   // ════════════════════════════════════════════════════════════════
-  const handleLogin = async (email: string, role: UserRole) => {
-    console.log('[LOGIN] Login bem-sucedido para:', email, 'Role:', role);
-    
-    const nextScreen = getScreenByRole(role);
+const handleLogin = async (email: string, role: UserRole, name: string) => {
+  console.log('[LOGIN] Login bem-sucedido para:', email, 'Role:', role, 'Name:', name);
+  
+  const nextScreen = getScreenByRole(role);
 
-    setState(prev => ({
-      ...prev,
-      isLoggedIn: true,
-      currentUserEmail: email,
-      currentRole: role,
-      currentScreen: nextScreen
-    }));
-  };
+  setState(prev => ({
+    ...prev,
+    isLoggedIn: true,
+    currentUserEmail: email,
+    currentUserName: name, // ✅ AGORA FUNCIONA
+    currentRole: role,
+    currentScreen: nextScreen
+  }));
+};
 
   // ════════════════════════════════════════════════════════════════
   // 🚪 LOGOUT
@@ -321,6 +328,23 @@ export const PhoneSimulator: React.FC = () => {
             onHasAccount={() => changeScreen('login')}
           />
         );
+
+        case 'entrepreneur_services':
+      return (
+        <EntrepreneurServicesScreen 
+          onBack={() => changeScreen('entrepreneur_profile')}
+          onNavigate={changeScreen}
+          entrepreneurEmail={state.currentUserEmail}
+        />
+      );
+
+      case 'admin_all_activities':
+  return (
+    <AdminAllActivitiesScreen 
+      onBack={() => changeScreen('admin_profile')}
+      onNavigate={changeScreen}
+    />
+  );
       
       case 'role_select':
         return (
@@ -435,6 +459,9 @@ export const PhoneSimulator: React.FC = () => {
               changeScreen(backTo);
             }}
             onSave={handleCreateActivity}
+            organizerName={state.currentUserName}
+
+            
           />
         );
       

@@ -24,7 +24,7 @@ export interface LocalActivity {
   reviewsCount: string;
   image: string;
   details: string;
-  category: 'Ciclismo' | 'Corrida' | 'Caminhada' | 'Surf' | 'Restaurantes' | 'Bares' | 'Autônomos' | 'Geral';
+  category: 'Ciclismo' | 'Corrida' | 'Caminhada' | 'Surf' | 'RESTAURANTE' | 'Bares' | 'Autônomos' | 'Geral';
   type: 'evento' | 'servico';
   isCustom?: boolean;
 }
@@ -47,7 +47,9 @@ export interface AppState {
   currentRole: UserRole;
   isLoggedIn: boolean;
   currentUserEmail: string;
+  currentUserName: string;
   currentScreen: string; // welcome, login, register, role_select, search, map, event_detail, service_detail, entrepreneur_profile, reviews_mgmt, admin_profile, appointments, events_services
+  
   selectedActivityId: string | null;
   ratingModalType: 'evento' | 'servico' | null;
   reviews: Review[];

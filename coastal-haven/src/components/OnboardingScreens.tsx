@@ -54,7 +54,7 @@ export const WelcomeScreen: React.FC<WelcomeProps> = ({ onNext }) => {
 interface LoginProps {
   onBack: () => void;
   onRegister: () => void;
-  onLogin: (email: string, role: UserRole) => void;
+  onLogin: (email: string, role: UserRole, name: string) => void;
 }
 
 export const LoginScreen: React.FC<LoginProps> = ({ onBack, onRegister, onLogin }) => {
@@ -101,7 +101,7 @@ export const LoginScreen: React.FC<LoginProps> = ({ onBack, onRegister, onLogin 
       localStorage.setItem('userRole', response.role);
       localStorage.setItem('userName', response.name);
       
-      onLogin(email, mappedRole);
+      onLogin(email, mappedRole, response.name);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Erro ao fazer login. Verifique suas credenciais.';
       setErrorMsg(errorMessage);
@@ -133,7 +133,7 @@ export const LoginScreen: React.FC<LoginProps> = ({ onBack, onRegister, onLogin 
       localStorage.setItem('userRole', response.role);
       localStorage.setItem('userName', response.name);
 
-      onLogin(mockEmail, role);
+      onLogin(mockEmail, role, response.name);
     } catch (error: any) {
       // Se falhar, mostrar mensagem
       const errorMessage = error.response?.data?.message || 'Credenciais de teste não encontradas.';

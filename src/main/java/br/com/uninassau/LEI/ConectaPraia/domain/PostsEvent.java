@@ -25,6 +25,7 @@ public class PostsEvent {
     private LocalDateTime dateHour;
     private BigDecimal value;
     private String valueDescription;   // "+ prancha", "aula + prancha"
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
     private LocalDateTime createdAt;
 
