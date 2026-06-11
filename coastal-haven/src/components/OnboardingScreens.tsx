@@ -147,9 +147,8 @@ export const LoginScreen: React.FC<LoginProps> = ({ onBack, onRegister, onLogin 
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-[#4DA297] text-white overflow-y-auto no-scrollbar justify-between p-6">
+    <div className="w-full min-h-screen flex flex-col bg-[#4DA297] text-white overflow-y-auto no-scrollbar justify-start p-6">
       <header className="flex justify-between items-center pt-4">
-        <span className="text-xs font-semibold opacity-80">9:27</span>
         <button 
           onClick={onBack}
           className="flex items-center gap-1 text-sm font-semibold hover:opacity-80 transition-opacity bg-black/10 px-3 py-1 rounded-full cursor-pointer"
@@ -258,7 +257,7 @@ export const LoginScreen: React.FC<LoginProps> = ({ onBack, onRegister, onLogin 
         </div>
       </div>
 
-      <div className="w-24 h-1 bg-white/20 rounded-full mx-auto" />
+      <div/>
     </div>
   );
 };
