@@ -1,3 +1,7 @@
+// src/components/PhoneSimulator.tsx - VERSÃO SEM JWT DECODING
+// Foco: Routing por perfil + Fluxo de registro correto
+// ═══════════════════════════════════════════════════════════════════════
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LucideIcon } from './LucideIcon';
@@ -26,27 +30,38 @@ export const PhoneSimulator: React.FC = () => {
     activities: ACTIVITIES
   });
 
-  // Verificar se há sessão anterior ao carregar
+  // ════════════════════════════════════════════════════════════════
+  // 🔐 VERIFICAR SESSÃO ANTERIOR AO CARREGAR
+  // ════════════════════════════════════════════════════════════════
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userEmail = localStorage.getItem('userEmail');
     const userRole = localStorage.getItem('userRole');
 
+    console.log('[SESSION] Verificando sessão anterior...');
+
+    // Simples: se tem token e email e role, restaura
     if (token && userEmail && userRole) {
-      // Usuário já estava logado
+      console.log('[SESSION] Sessão encontrada para:', userEmail);
+      
       const mappedRole = mapBackendRoleToFrontend(userRole);
+      const nextScreen = getScreenByRole(mappedRole);
+
       setState(prev => ({
         ...prev,
         isLoggedIn: true,
         currentUserEmail: userEmail,
         currentRole: mappedRole,
-        currentScreen: mappedRole === UserRole.Empreendedor ? 'entrepreneur_profile' : 
-                       mappedRole === UserRole.Administrador ? 'admin_profile' : 'map'
+        currentScreen: nextScreen
       }));
+    } else {
+      console.log('[SESSION] Nenhuma sessão anterior');
     }
   }, []);
 
-  // Mapear role do backend para frontend
+  // ════════════════════════════════════════════════════════════════
+  // 🎯 MAPEAR ROLE DO BACKEND PARA FRONTEND
+  // ════════════════════════════════════════════════════════════════
   const mapBackendRoleToFrontend = (backendRole: string): UserRole => {
     switch (backendRole) {
       case 'EMPREENDEDOR':
@@ -55,6 +70,20 @@ export const PhoneSimulator: React.FC = () => {
         return UserRole.Administrador;
       default:
         return UserRole.Turista;
+    }
+  };
+
+  // ════════════════════════════════════════════════════════════════
+  // 🖼️ OBTER TELA INICIAL POR ROLE
+  // ════════════════════════════════════════════════════════════════
+  const getScreenByRole = (role: UserRole): string => {
+    switch (role) {
+      case UserRole.Empreendedor:
+        return 'entrepreneur_profile';
+      case UserRole.Administrador:
+        return 'admin_profile';
+      default: // Turista
+        return 'map';
     }
   };
 
@@ -67,7 +96,6 @@ export const PhoneSimulator: React.FC = () => {
       let response;
       
       if (newAct.type === 'evento') {
-        // Chamar API para criar evento
         response = await eventService.createEvent({
           title: newAct.title,
           eventType: newAct.category as any,
@@ -78,7 +106,6 @@ export const PhoneSimulator: React.FC = () => {
           description: newAct.details,
         });
       } else {
-        // Chamar API para criar serviço
         response = await serviceService.createService({
           title: newAct.title,
           serviceType: newAct.category as any,
@@ -90,7 +117,6 @@ export const PhoneSimulator: React.FC = () => {
         });
       }
 
-      // Adicionar ao estado local
       setState(prev => {
         const added: LocalActivity = {
           ...newAct,
@@ -118,25 +144,30 @@ export const PhoneSimulator: React.FC = () => {
     }
   };
 
+  // ════════════════════════════════════════════════════════════════
+  // ✅ LOGIN - COM ROUTING AUTOMÁTICO POR ROLE
+  // ════════════════════════════════════════════════════════════════
   const handleLogin = async (email: string, role: UserRole) => {
-    // handleLogin agora é chamado pelo LoginScreen com role já mapeado
-    setState(prev => {
-      let nextScreen = 'map'; 
-      if (role === UserRole.Empreendedor) nextScreen = 'entrepreneur_profile';
-      if (role === UserRole.Administrador) nextScreen = 'admin_profile';
+    console.log('[LOGIN] Login bem-sucedido para:', email, 'Role:', role);
+    
+    const nextScreen = getScreenByRole(role);
 
-      return {
-        ...prev,
-        isLoggedIn: true,
-        currentUserEmail: email,
-        currentRole: role,
-        currentScreen: nextScreen
-      };
-    });
+    setState(prev => ({
+      ...prev,
+      isLoggedIn: true,
+      currentUserEmail: email,
+      currentRole: role,
+      currentScreen: nextScreen
+    }));
   };
 
+  // ════════════════════════════════════════════════════════════════
+  // 🚪 LOGOUT
+  // ════════════════════════════════════════════════════════════════
   const handleLogout = () => {
+    console.log('[LOGOUT] Desconectando usuário...');
     authService.logout();
+    
     setState(prev => ({
       ...prev,
       isLoggedIn: false,
@@ -144,6 +175,22 @@ export const PhoneSimulator: React.FC = () => {
       currentRole: UserRole.Turista,
       currentScreen: 'welcome'
     }));
+  };
+
+  // ════════════════════════════════════════════════════════════════
+  // 📝 REGISTRO - VOLTA PARA LOGIN (NÃO FAZ LOGIN AUTOMÁTICO)
+  // ════════════════════════════════════════════════════════════════
+  const handleRegistered = (email: string) => {
+    console.log('[REGISTER] Registro bem-sucedido para:', email);
+    console.log('[REGISTER] Voltando para tela de login...');
+    
+    // Apenas volta para login - NÃO faz login automático
+    changeScreen('login');
+    
+    // Mostrar mensagem amigável
+    setTimeout(() => {
+      alert(`Bem-vindo! ${email}\n\nAcesso criado com sucesso. Por favor, faça login com suas credenciais.`);
+    }, 300);
   };
 
   const selectActivity = (id: string, type: 'evento' | 'servico') => {
@@ -215,7 +262,6 @@ export const PhoneSimulator: React.FC = () => {
         return;
       }
 
-      // Chamar API para enviar avaliação
       if (selectedActivity.type === 'evento') {
         await reviewService.reviewEvent(state.selectedActivityId || '', {
           rating: starsMain,
@@ -228,7 +274,6 @@ export const PhoneSimulator: React.FC = () => {
         });
       }
 
-      // Adicionar review ao estado local
       const newRev: Review = {
         id: `rev-${Date.now()}`,
         userName: state.currentUserEmail ? state.currentUserEmail.split('@')[0] : 'Turista Satisfeito',
@@ -251,10 +296,14 @@ export const PhoneSimulator: React.FC = () => {
     }
   };
 
+  // ════════════════════════════════════════════════════════════════
+  // 🎬 RENDERIZAR TELAS
+  // ════════════════════════════════════════════════════════════════
   const renderPhoneScreen = () => {
     switch (state.currentScreen) {
       case 'welcome':
         return <WelcomeScreen onNext={() => changeScreen('login')} />;
+      
       case 'login':
         return (
           <LoginScreen 
@@ -263,17 +312,16 @@ export const PhoneSimulator: React.FC = () => {
             onLogin={handleLogin}
           />
         );
+      
       case 'register':
         return (
           <RegisterScreen 
             onBack={() => changeScreen('login')}
-            onRegistered={(email) => {
-              // Fazer login automático após registro
-              handleLogin(email, UserRole.Turista);
-            }}
+            onRegistered={handleRegistered}
             onHasAccount={() => changeScreen('login')}
           />
         );
+      
       case 'role_select':
         return (
           <RoleSelectScreen 
@@ -284,6 +332,7 @@ export const PhoneSimulator: React.FC = () => {
             }}
           />
         );
+      
       case 'search':
         return (
           <TouristSearchScreen 
@@ -292,6 +341,7 @@ export const PhoneSimulator: React.FC = () => {
             activities={state.activities}
           />
         );
+      
       case 'map':
         return (
           <InteractiveMapScreen 
@@ -300,6 +350,7 @@ export const PhoneSimulator: React.FC = () => {
             activities={state.activities}
           />
         );
+      
       case 'event_detail':
         return (
           <EventDetailScreen 
@@ -313,6 +364,7 @@ export const PhoneSimulator: React.FC = () => {
             activities={state.activities}
           />
         );
+      
       case 'service_detail':
         return (
           <ServiceDetailScreen 
@@ -326,6 +378,7 @@ export const PhoneSimulator: React.FC = () => {
             activities={state.activities}
           />
         );
+      
       case 'entrepreneur_profile':
         return (
           <EntrepreneurProfileScreen 
@@ -335,6 +388,7 @@ export const PhoneSimulator: React.FC = () => {
             onLogout={handleLogout}
           />
         );
+      
       case 'reviews_mgmt':
         return (
           <ReviewsManagementScreen 
@@ -343,6 +397,7 @@ export const PhoneSimulator: React.FC = () => {
             onDeleteReview={deleteReview}
           />
         );
+      
       case 'admin_profile':
         return (
           <AdminProfileScreen 
@@ -351,6 +406,7 @@ export const PhoneSimulator: React.FC = () => {
             onNavigate={changeScreen}
           />
         );
+      
       case 'appointments':
         return (
           <AppointmentsScreen 
@@ -360,6 +416,7 @@ export const PhoneSimulator: React.FC = () => {
             onExplore={() => changeScreen('events_services')}
           />
         );
+      
       case 'events_services':
         return (
           <EventsAndServicesScreen 
@@ -369,6 +426,7 @@ export const PhoneSimulator: React.FC = () => {
             activities={state.activities}
           />
         );
+      
       case 'create_activity':
         return (
           <CreateActivityScreen 
@@ -379,6 +437,7 @@ export const PhoneSimulator: React.FC = () => {
             onSave={handleCreateActivity}
           />
         );
+      
       default:
         return <WelcomeScreen onNext={() => changeScreen('login')} />;
     }
@@ -400,7 +459,9 @@ export const PhoneSimulator: React.FC = () => {
         
         {state.isLoggedIn && (
           <div className="flex items-center space-x-4 text-sm">
-            <span className="text-gray-400 hidden sm:inline">Olá, <strong>{state.currentUserEmail.split('@')[0]}</strong></span>
+            <span className="text-gray-400 hidden sm:inline">
+              Olá, <strong>{state.currentUserEmail.split('@')[0]}</strong>
+            </span>
             <span className="text-xs bg-[#80d6d1] text-gray-900 px-3 py-1 rounded-full font-bold">
               {state.currentRole}
             </span>
