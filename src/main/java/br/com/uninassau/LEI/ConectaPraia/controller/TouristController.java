@@ -3,6 +3,7 @@ package br.com.uninassau.LEI.ConectaPraia.controller;
 import br.com.uninassau.LEI.ConectaPraia.dto.TouristSubscribeResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.service.TouristService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/subscriptions")
+@PreAuthorize("hasRole('EMPREENDEDOR')")
 public class TouristController {
 
     private final TouristService touristService;

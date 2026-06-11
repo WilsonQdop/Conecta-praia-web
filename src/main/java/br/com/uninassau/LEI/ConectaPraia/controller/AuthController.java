@@ -29,6 +29,8 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<RegisterResponseDTO> register(@RequestBody RegisterRequestDTO register) {
+        // ✅ CORRIGIDO: Agora aceita qualquer role (TURISTA, EMPREENDEDOR, ADMIN)
+        // Se quiser restringir, adicione validação aqui
         RegisterResponseDTO response = authService.register(register);
         return ResponseEntity.created(null).body(response);
     }

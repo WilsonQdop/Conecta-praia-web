@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/postEvent")
+@PreAuthorize("hasRole('EMPREENDEDOR')")
 public class PostEventController {
 
     private final PostEventService postEventService;
@@ -21,7 +22,6 @@ public class PostEventController {
         this.postEventService = postEventService;
     }
 
-    @PreAuthorize("hasRole('EMPREENDEDOR')")
     @PostMapping("/create")
     public ResponseEntity<CreatePostEventResponseDTO> createEvent(@RequestBody CreatePostEventRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(postEventService.createPostEvent(request));

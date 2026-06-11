@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LucideIcon } from './LucideIcon';
 import { AppState, UserRole, LocalActivity, Appointment, Review } from '../types';
@@ -8,9 +8,9 @@ import { EntrepreneurProfileScreen, ReviewsManagementScreen } from './Entreprene
 import { AdminProfileScreen } from './AdminScreens';
 import { CreateActivityScreen } from './CreateActivityScreen';
 import { IMAGES, ACTIVITIES, INITIAL_REVIEWS, INITIAL_APPOINTMENTS } from '../data';
+import { authService, eventService, serviceService, reviewService, subscriptionService } from '../services/api';
 
 export const PhoneSimulator: React.FC = () => {
-  // Master app state holding interactive data flow
   const [state, setState] = useState<AppState>({
     currentRole: UserRole.Turista,
     isLoggedIn: false,
@@ -26,32 +26,100 @@ export const PhoneSimulator: React.FC = () => {
     activities: ACTIVITIES
   });
 
+  // Verificar se há sessão anterior ao carregar
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userEmail = localStorage.getItem('userEmail');
+    const userRole = localStorage.getItem('userRole');
+
+    if (token && userEmail && userRole) {
+      // Usuário já estava logado
+      const mappedRole = mapBackendRoleToFrontend(userRole);
+      setState(prev => ({
+        ...prev,
+        isLoggedIn: true,
+        currentUserEmail: userEmail,
+        currentRole: mappedRole,
+        currentScreen: mappedRole === UserRole.Empreendedor ? 'entrepreneur_profile' : 
+                       mappedRole === UserRole.Administrador ? 'admin_profile' : 'map'
+      }));
+    }
+  }, []);
+
+  // Mapear role do backend para frontend
+  const mapBackendRoleToFrontend = (backendRole: string): UserRole => {
+    switch (backendRole) {
+      case 'EMPREENDEDOR':
+        return UserRole.Empreendedor;
+      case 'ADMIN':
+        return UserRole.Administrador;
+      default:
+        return UserRole.Turista;
+    }
+  };
+
   const changeScreen = (screen: string) => {
     setState(prev => ({ ...prev, currentScreen: screen }));
   };
 
-  const handleCreateActivity = (newAct: Omit<LocalActivity, 'id' | 'rating' | 'reviewsCount'>) => {
-    setState(prev => {
-      const added: LocalActivity = {
-        ...newAct,
-        id: `act-${Date.now()}`,
-        rating: 5.0,
-        reviewsCount: '1 avaliação',
-        isCustom: true
-      };
+  const handleCreateActivity = async (newAct: Omit<LocalActivity, 'id' | 'rating' | 'reviewsCount'>) => {
+    try {
+      let response;
       
-      let nextScreen = 'entrepreneur_profile';
-      if (prev.currentRole === UserRole.Administrador) nextScreen = 'admin_profile';
+      if (newAct.type === 'evento') {
+        // Chamar API para criar evento
+        response = await eventService.createEvent({
+          title: newAct.title,
+          eventType: newAct.category as any,
+          location: newAct.location,
+          value: parseFloat(newAct.price.replace(/[^\d.-]/g, '') || '0'),
+          valueDescription: newAct.price,
+          imageUrl: newAct.image,
+          description: newAct.details,
+        });
+      } else {
+        // Chamar API para criar serviço
+        response = await serviceService.createService({
+          title: newAct.title,
+          serviceType: newAct.category as any,
+          location: newAct.location,
+          value: parseFloat(newAct.price.replace(/[^\d.-]/g, '') || '0'),
+          valueDescription: newAct.price,
+          imageUrl: newAct.image,
+          description: newAct.details,
+        });
+      }
 
-      return {
-        ...prev,
-        activities: [added, ...prev.activities],
-        currentScreen: nextScreen
-      };
-    });
+      // Adicionar ao estado local
+      setState(prev => {
+        const added: LocalActivity = {
+          ...newAct,
+          id: `act-${Date.now()}`,
+          rating: 5.0,
+          reviewsCount: '1 avaliação',
+          isCustom: true
+        };
+        
+        let nextScreen = 'entrepreneur_profile';
+        if (prev.currentRole === UserRole.Administrador) nextScreen = 'admin_profile';
+
+        return {
+          ...prev,
+          activities: [added, ...prev.activities],
+          currentScreen: nextScreen
+        };
+      });
+
+      alert(`${newAct.type === 'evento' ? 'Evento' : 'Serviço'} criado com sucesso!`);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Erro ao criar atividade';
+      alert(`Erro: ${errorMessage}`);
+      console.error('Erro ao criar atividade:', error);
+    }
   };
 
-  const handleLogin = (email: string, role: UserRole) => {
+  const handleLogin = async (email: string, role: UserRole) => {
+    // handleLogin agora é chamado pelo LoginScreen com role já mapeado
     setState(prev => {
       let nextScreen = 'map'; 
       if (role === UserRole.Empreendedor) nextScreen = 'entrepreneur_profile';
@@ -68,10 +136,12 @@ export const PhoneSimulator: React.FC = () => {
   };
 
   const handleLogout = () => {
+    authService.logout();
     setState(prev => ({
       ...prev,
       isLoggedIn: false,
       currentUserEmail: '',
+      currentRole: UserRole.Turista,
       currentScreen: 'welcome'
     }));
   };
@@ -136,22 +206,49 @@ export const PhoneSimulator: React.FC = () => {
     }));
   };
 
-  const submitRating = (starsMain: number, commentMain: string, starsSec: number, commentSec: string) => {
-    const newRev: Review = {
-      id: `rev-${Date.now()}`,
-      userName: state.currentUserEmail ? state.currentUserEmail.split('@')[0] : 'Turista Satisfeito',
-      rating: starsMain,
-      comment: commentMain || 'Serviço maravilhoso de se apreciar!',
-      date: new Date().toLocaleDateString('pt-BR')
-    };
+  const submitRating = async (starsMain: number, commentMain: string, starsSec: number, commentSec: string) => {
+    try {
+      const selectedActivity = state.activities.find(a => a.id === state.selectedActivityId);
+      
+      if (!selectedActivity) {
+        alert('Atividade não encontrada');
+        return;
+      }
 
-    setState(prev => ({
-      ...prev,
-      reviews: [newRev, ...prev.reviews],
-      ratingModalType: null
-    }));
-    
-    alert('Sua avaliação foi enviada com sucesso! Atualizamos as métricas do perfil na orla.');
+      // Chamar API para enviar avaliação
+      if (selectedActivity.type === 'evento') {
+        await reviewService.reviewEvent(state.selectedActivityId || '', {
+          rating: starsMain,
+          comment: commentMain || 'Serviço maravilhoso de se apreciar!'
+        });
+      } else {
+        await reviewService.reviewService(state.selectedActivityId || '', {
+          rating: starsMain,
+          comment: commentMain || 'Serviço maravilhoso de se apreciar!'
+        });
+      }
+
+      // Adicionar review ao estado local
+      const newRev: Review = {
+        id: `rev-${Date.now()}`,
+        userName: state.currentUserEmail ? state.currentUserEmail.split('@')[0] : 'Turista Satisfeito',
+        rating: starsMain,
+        comment: commentMain || 'Serviço maravilhoso de se apreciar!',
+        date: new Date().toLocaleDateString('pt-BR')
+      };
+
+      setState(prev => ({
+        ...prev,
+        reviews: [newRev, ...prev.reviews],
+        ratingModalType: null
+      }));
+
+      alert('Sua avaliação foi enviada com sucesso!');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Erro ao enviar avaliação';
+      alert(`Erro: ${errorMessage}`);
+      console.error('Erro ao enviar avaliação:', error);
+    }
   };
 
   const renderPhoneScreen = () => {
@@ -171,7 +268,7 @@ export const PhoneSimulator: React.FC = () => {
           <RegisterScreen 
             onBack={() => changeScreen('login')}
             onRegistered={(email) => {
-              alert('Parabéns! Cadastro efetuado com sucesso.');
+              // Fazer login automático após registro
               handleLogin(email, UserRole.Turista);
             }}
             onHasAccount={() => changeScreen('login')}
@@ -304,9 +401,12 @@ export const PhoneSimulator: React.FC = () => {
         {state.isLoggedIn && (
           <div className="flex items-center space-x-4 text-sm">
             <span className="text-gray-400 hidden sm:inline">Olá, <strong>{state.currentUserEmail.split('@')[0]}</strong></span>
+            <span className="text-xs bg-[#80d6d1] text-gray-900 px-3 py-1 rounded-full font-bold">
+              {state.currentRole}
+            </span>
             <button 
               onClick={handleLogout}
-              className="bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white px-3 py-1.5 rounded-lg transition-colors text-xs font-semibold"
+              className="bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white px-3 py-1.5 rounded-lg transition-colors text-xs font-semibold cursor-pointer"
             >
               Sair
             </button>
@@ -314,7 +414,7 @@ export const PhoneSimulator: React.FC = () => {
         )}
       </header>
 
-      {/* Conteúdo Principal expandido ocupando toda a viewport restante */}
+      {/* Conteúdo Principal */}
       <main className="flex-1 w-full relative flex flex-col overflow-auto">
         <AnimatePresence mode="wait">
           <motion.div 

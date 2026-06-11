@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/postService")
+
+@PreAuthorize("hasRole('EMPREENDEDOR')")
 public class PostServiceController {
     private final PostServiceService postServiceService;
 
@@ -18,7 +20,6 @@ public class PostServiceController {
         this.postServiceService = postServiceService;
     }
 
-    @PreAuthorize("hasRole('EMPREENDEDOR')")
     @PostMapping("/create")
     public ResponseEntity<CreatePostServiceResponseDTO> createPost(@RequestBody CreatePostServiceRequestDTO request) {
 

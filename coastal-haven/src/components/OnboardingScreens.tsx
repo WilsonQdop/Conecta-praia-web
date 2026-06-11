@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { LucideIcon } from './LucideIcon';
 import { UserRole } from '../types';
 import { IMAGES } from '../data';
+import { authService, RegisterRequest } from '../services/api';
 
 interface WelcomeProps {
   onNext: () => void;
@@ -71,30 +72,87 @@ export const LoginScreen: React.FC<LoginProps> = ({ onBack, onRegister, onLogin 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) {
-      setErrorMsg('Por favor, insira seu e-mail.');
-      return;
+  // Mapear role do backend para o frontend
+  const mapRole = (backendRole: string): UserRole => {
+    switch (backendRole) {
+      case 'EMPREENDEDOR':
+        return UserRole.Empreendedor;
+      case 'ADMIN':
+        return UserRole.Administrador;
+      default:
+        return UserRole.Turista;
     }
-    // Simple heuristic to determine user role based on email if the user didn't pre-choose,
-    // or we default to Turista, but can let him pre-config in the role Selection
-    let resolvedRole = UserRole.Turista;
-    if (email.toLowerCase().includes('empreendedor') || email.toLowerCase().includes('barraca')) {
-      resolvedRole = UserRole.Empreendedor;
-    } else if (email.toLowerCase().includes('admin') || email.toLowerCase().includes('lucio')) {
-      resolvedRole = UserRole.Administrador;
-    }
-    
-    onLogin(email, resolvedRole);
   };
 
-  const handleQuickLogin = (role: UserRole) => {
-    let mockEmail = 'turista@domain.com';
-    if (role === UserRole.Empreendedor) mockEmail = 'barraca@ceuazul.com.br';
-    if (role === UserRole.Administrador) mockEmail = 'lucio.botelho@admin.com';
-    onLogin(mockEmail, role);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setLoading(true);
+
+    if (!email) {
+      setErrorMsg('Por favor, insira seu e-mail.');
+      setLoading(false);
+      return;
+    }
+
+    if (!password) {
+      setErrorMsg('Por favor, insira sua senha.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await authService.login({ email, password });
+      const mappedRole = mapRole(response.role);
+      
+      // Armazenar dados no localStorage para persistência
+      localStorage.setItem('userEmail', email);
+      localStorage.setItem('userRole', response.role);
+      localStorage.setItem('userName', response.name);
+      
+      onLogin(email, mappedRole);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Erro ao fazer login. Verifique suas credenciais.';
+      setErrorMsg(errorMessage);
+      console.error('Erro de login:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickLogin = async (role: UserRole) => {
+    // Para teste rápido - usar credenciais de exemplo
+    setLoading(true);
+    try {
+      let mockEmail = 'turista@example.com';
+      let mockPassword = 'password123';
+
+      if (role === UserRole.Empreendedor) {
+        mockEmail = 'empreendedor@example.com';
+      } else if (role === UserRole.Administrador) {
+        mockEmail = 'admin@example.com';
+      }
+
+      const response = await authService.login({ 
+        email: mockEmail, 
+        password: mockPassword 
+      });
+
+      localStorage.setItem('userEmail', mockEmail);
+      localStorage.setItem('userRole', response.role);
+      localStorage.setItem('userName', response.name);
+
+      onLogin(mockEmail, role);
+    } catch (error: any) {
+      // Se falhar, mostrar mensagem
+      const errorMessage = error.response?.data?.message || 'Credenciais de teste não encontradas.';
+      alert(`Erro: ${errorMessage}\n\nUse o formulário acima com suas credenciais reais.`);
+      console.error('Erro no login rápido:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -123,7 +181,8 @@ export const LoginScreen: React.FC<LoginProps> = ({ onBack, onRegister, onLogin 
               value={email}
               onChange={(e) => { setEmail(e.target.value); setErrorMsg(''); }}
               placeholder="Digite seu e-mail"
-              className="w-full h-12 px-4 rounded-lg bg-white text-gray-900 placeholder-gray-400 text-sm shadow-sm border-none focus:outline-none focus:ring-2 focus:ring-[#80d6d1] transition-all"
+              disabled={loading}
+              className="w-full h-12 px-4 rounded-lg bg-white text-gray-900 placeholder-gray-400 text-sm shadow-sm border-none focus:outline-none focus:ring-2 focus:ring-[#80d6d1] transition-all disabled:opacity-50"
             />
           </div>
           <div>
@@ -132,7 +191,8 @@ export const LoginScreen: React.FC<LoginProps> = ({ onBack, onRegister, onLogin 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Digite sua senha"
-              className="w-full h-12 px-4 rounded-lg bg-white text-gray-900 placeholder-gray-400 text-sm shadow-sm border-none focus:outline-none focus:ring-2 focus:ring-[#80d6d1] transition-all"
+              disabled={loading}
+              className="w-full h-12 px-4 rounded-lg bg-white text-gray-900 placeholder-gray-400 text-sm shadow-sm border-none focus:outline-none focus:ring-2 focus:ring-[#80d6d1] transition-all disabled:opacity-50"
             />
           </div>
 
@@ -145,15 +205,17 @@ export const LoginScreen: React.FC<LoginProps> = ({ onBack, onRegister, onLogin 
           <div className="space-y-3 pt-2">
             <button 
               type="submit"
-              className="w-full h-12 bg-[#76C7C0] hover:bg-[#68B1AB] text-white font-semibold rounded-lg transition-colors shadow-md cursor-pointer"
+              disabled={loading}
+              className="w-full h-12 bg-[#76C7C0] hover:bg-[#68B1AB] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors shadow-md cursor-pointer"
             >
-              Entrar
+              {loading ? 'Entrando...' : 'Entrar'}
             </button>
 
             <button 
               type="button"
+              disabled={loading}
               onClick={() => handleQuickLogin(UserRole.Turista)}
-              className="w-full h-12 bg-white hover:bg-gray-50 text-gray-700 font-semibold rounded-lg flex items-center justify-center gap-3 transition-colors shadow-sm cursor-pointer"
+              className="w-full h-12 bg-white hover:bg-gray-50 disabled:opacity-50 text-gray-700 font-semibold rounded-lg flex items-center justify-center gap-3 transition-colors shadow-sm cursor-pointer"
             >
               <img src={IMAGES.googleLogo} alt="Google Logo" className="w-5 h-5" />
               <span className="text-sm">Entrar com Google</span>
@@ -161,25 +223,28 @@ export const LoginScreen: React.FC<LoginProps> = ({ onBack, onRegister, onLogin 
           </div>
         </form>
 
-        {/* Shortcut Profile Helpers (Ideal for visual testing of different screens!) */}
+        {/* Shortcut Profile Helpers (Demo) */}
         <div className="mt-8 pt-4 border-t border-white/15 text-center">
           <p className="text-[10px] text-teal-100 font-bold uppercase tracking-wider mb-2">Acesso Rápido de Demonstração:</p>
-          <div className="flex gap-1.5 justify-center">
+          <div className="flex gap-1.5 justify-center flex-wrap">
             <button 
               onClick={() => handleQuickLogin(UserRole.Turista)}
-              className="text-[10px] bg-black/20 hover:bg-black/45 hover:text-white transition-all px-2.5 py-1.5 rounded-full font-bold text-teal-100"
+              disabled={loading}
+              className="text-[10px] bg-black/20 hover:bg-black/45 disabled:opacity-50 hover:text-white transition-all px-2.5 py-1.5 rounded-full font-bold text-teal-100 cursor-pointer"
             >
               🚀 Turista
             </button>
             <button 
               onClick={() => handleQuickLogin(UserRole.Empreendedor)}
-              className="text-[10px] bg-black/20 hover:bg-black/45 hover:text-white transition-all px-2.5 py-1.5 rounded-full font-bold text-teal-100"
+              disabled={loading}
+              className="text-[10px] bg-black/20 hover:bg-black/45 disabled:opacity-50 hover:text-white transition-all px-2.5 py-1.5 rounded-full font-bold text-teal-100 cursor-pointer"
             >
               🏪 Empreendedor
             </button>
             <button 
               onClick={() => handleQuickLogin(UserRole.Administrador)}
-              className="text-[10px] bg-black/20 hover:bg-black/45 hover:text-white transition-all px-2.5 py-1.5 rounded-full font-bold text-teal-100"
+              disabled={loading}
+              className="text-[10px] bg-black/20 hover:bg-black/45 disabled:opacity-50 hover:text-white transition-all px-2.5 py-1.5 rounded-full font-bold text-teal-100 cursor-pointer"
             >
               🛡️ ADM
             </button>
@@ -189,13 +254,13 @@ export const LoginScreen: React.FC<LoginProps> = ({ onBack, onRegister, onLogin 
         <div className="mt-8 flex flex-col items-center gap-3 text-xs">
           <button 
             onClick={() => alert('Link de recuperação enviado para o seu e-mail!')}
-            className="text-white font-medium underline underline-offset-2 opacity-95 hover:opacity-100"
+            className="text-white font-medium underline underline-offset-2 opacity-95 hover:opacity-100 cursor-pointer"
           >
             Esqueceu sua senha?
           </button>
           <button 
             onClick={onRegister}
-            className="text-white font-medium underline underline-offset-2 opacity-95 hover:opacity-100"
+            className="text-white font-medium underline underline-offset-2 opacity-95 hover:opacity-100 cursor-pointer"
           >
             Não possui cadastro?
           </button>
@@ -214,15 +279,137 @@ interface RegisterProps {
 }
 
 export const RegisterScreen: React.FC<RegisterProps> = ({ onBack, onRegistered, onHasAccount }) => {
-  const [email, setEmail] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    cpf: '',
+    phone: '',
+    password: '',
+    passwordConfirm: '',
+    role: 'TURISTA' as 'TURISTA' | 'EMPREENDEDOR' | 'ADMIN',
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+
+  // Validação de CPF simples (apenas formato)
+  const validateCPF = (cpf: string) => {
+    const cleaned = cpf.replace(/\D/g, '');
+    return cleaned.length === 11;
+  };
+
+  // Validação de telefone
+  const validatePhone = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    return cleaned.length >= 10 && cleaned.length <= 11;
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Limpar erro ao digitar
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      alert('Digite seu e-mail para cadastrar!');
+    const newErrors: Record<string, string> = {};
+
+    // Validações
+    if (!formData.name.trim()) {
+      newErrors.name = 'Nome é obrigatório';
+    }
+    if (!formData.email.trim()) {
+      newErrors.email = 'E-mail é obrigatório';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'E-mail inválido';
+    }
+    if (!formData.cpf.trim()) {
+      newErrors.cpf = 'CPF é obrigatório';
+    } else if (!validateCPF(formData.cpf)) {
+      newErrors.cpf = 'CPF deve ter 11 dígitos';
+    }
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Telefone é obrigatório';
+    } else if (!validatePhone(formData.phone)) {
+      newErrors.phone = 'Telefone inválido (10 ou 11 dígitos)';
+    }
+    if (!formData.password.trim()) {
+      newErrors.password = 'Senha é obrigatória';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Senha deve ter no mínimo 6 caracteres';
+    }
+    if (formData.password !== formData.passwordConfirm) {
+      newErrors.passwordConfirm = 'Senhas não correspondem';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
-    onRegistered(email);
+
+    // 🧹 LIMPAR localStorage ANTES de registrar
+    console.log('[DEBUG] Limpando localStorage...');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    console.log('[DEBUG] localStorage limpo!');
+
+    // Chamar API
+    setLoading(true);
+    try {
+      const registerRequest: RegisterRequest = {
+        name: formData.name,
+        email: formData.email,
+        cpf: formData.cpf.replace(/\D/g, ''), // Remove formatting
+        phone: formData.phone.replace(/\D/g, ''),
+        password: formData.password,
+        role: formData.role as 'TURISTA' | 'EMPREENDEDOR' | 'ADMIN',
+      };
+
+      console.log('[DEBUG] Enviando registro para:', registerRequest.email);
+      const response = await authService.register(registerRequest);
+      console.log('[DEBUG] Registro bem-sucedido!');
+      
+      alert(`Parabéns! Cadastro de ${formData.role.toLowerCase()} efetuado com sucesso.`);
+      onRegistered(response.email);
+    } catch (error: any) {
+      console.error('[ERROR] Erro completo:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Erro ao registrar';
+      alert(`Erro: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatCPF = (cpf: string) => {
+    const cleaned = cpf.replace(/\D/g, '');
+    if (cleaned.length <= 11) {
+      return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+    return cpf;
+  };
+
+  const formatPhone = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.length <= 11) {
+      if (cleaned.length <= 10) {
+        return cleaned.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+      } else {
+        return cleaned.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+      }
+    }
+    return phone;
   };
 
   return (
@@ -240,25 +427,151 @@ export const RegisterScreen: React.FC<RegisterProps> = ({ onBack, onRegistered, 
 
       <main className="flex-grow flex flex-col justify-center px-2 py-8">
         <div className="text-center mb-10">
-          <h1 className="text-[26px] font-extrabold text-gray-900 mb-2">Crie uma conta</h1>
-          <p className="text-gray-400 text-sm">Insira seu e-mail e junte-se a nós.</p>
+          <h1 className="text-[26px] font-extrabold text-gray-900 mb-2">Crie sua conta</h1>
+          <p className="text-gray-400 text-sm">Preencha seus dados para se registrar</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 mb-8">
+          {/* Nome */}
           <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Nome completo</label>
+            <input 
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              placeholder="João Silva"
+              disabled={loading}
+              className="w-full px-4 py-3.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#80d6d1] focus:border-transparent outline-none text-sm font-medium transition-all text-gray-900 placeholder:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            {errors.name && <p className="text-[10px] text-red-500 mt-1 font-bold">{errors.name}</p>}
+          </div>
+
+          {/* E-mail */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">E-mail</label>
             <input 
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
               placeholder="email@domain.com"
-              className="w-full px-4 py-3.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#80d6d1] focus:border-transparent outline-none text-sm font-medium transition-all text-gray-900 placeholder:text-gray-400"
+              disabled={loading}
+              className="w-full px-4 py-3.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#80d6d1] focus:border-transparent outline-none text-sm font-medium transition-all text-gray-900 placeholder:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
             />
+            {errors.email && <p className="text-[10px] text-red-500 mt-1 font-bold">{errors.email}</p>}
           </div>
+
+          {/* CPF */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">CPF</label>
+            <input 
+              type="text"
+              name="cpf"
+              value={formatCPF(formData.cpf)}
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/\D/g, '').slice(0, 11);
+                setFormData(prev => ({
+                  ...prev,
+                  cpf: cleaned
+                }));
+                if (errors.cpf) {
+                  setErrors(prev => {
+                    const newErrors = { ...prev };
+                    delete newErrors.cpf;
+                    return newErrors;
+                  });
+                }
+              }}
+              placeholder="000.000.000-00"
+              disabled={loading}
+              maxLength={14}
+              className="w-full px-4 py-3.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#80d6d1] focus:border-transparent outline-none text-sm font-medium transition-all text-gray-900 placeholder:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            {errors.cpf && <p className="text-[10px] text-red-500 mt-1 font-bold">{errors.cpf}</p>}
+          </div>
+
+          {/* Telefone */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Telefone</label>
+            <input 
+              type="tel"
+              name="phone"
+              value={formatPhone(formData.phone)}
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/\D/g, '').slice(0, 11);
+                setFormData(prev => ({
+                  ...prev,
+                  phone: cleaned
+                }));
+                if (errors.phone) {
+                  setErrors(prev => {
+                    const newErrors = { ...prev };
+                    delete newErrors.phone;
+                    return newErrors;
+                  });
+                }
+              }}
+              placeholder="(81) 9 9999-9999"
+              disabled={loading}
+              maxLength={15}
+              className="w-full px-4 py-3.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#80d6d1] focus:border-transparent outline-none text-sm font-medium transition-all text-gray-900 placeholder:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            {errors.phone && <p className="text-[10px] text-red-500 mt-1 font-bold">{errors.phone}</p>}
+          </div>
+
+          {/* Role Selection */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Tipo de conta</label>
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleInputChange}
+              disabled={loading}
+              className="w-full px-4 py-3.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#80d6d1] focus:border-transparent outline-none text-sm font-medium transition-all text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="TURISTA">🚀 Turista - Explorar experiências</option>
+              <option value="EMPREENDEDOR">🏪 Empreendedor - Oferecer serviços</option>
+              <option value="ADMIN">🛡️ Administrador - Gerenciar plataforma</option>
+            </select>
+          </div>
+
+          {/* Senha */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Senha</label>
+            <input 
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder="Mínimo 6 caracteres"
+              disabled={loading}
+              className="w-full px-4 py-3.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#80d6d1] focus:border-transparent outline-none text-sm font-medium transition-all text-gray-900 placeholder:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            {errors.password && <p className="text-[10px] text-red-500 mt-1 font-bold">{errors.password}</p>}
+          </div>
+
+          {/* Confirmar Senha */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Confirmar senha</label>
+            <input 
+              type="password"
+              name="passwordConfirm"
+              value={formData.passwordConfirm}
+              onChange={handleInputChange}
+              placeholder="Repita sua senha"
+              disabled={loading}
+              className="w-full px-4 py-3.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#80d6d1] focus:border-transparent outline-none text-sm font-medium transition-all text-gray-900 placeholder:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            {errors.passwordConfirm && <p className="text-[10px] text-red-500 mt-1 font-bold">{errors.passwordConfirm}</p>}
+          </div>
+
           <button 
             type="submit"
-            className="w-full bg-[#80d6d1] hover:bg-[#4f9e9a] text-white font-bold py-3.5 rounded-lg transition-colors shadow-sm cursor-pointer"
+            disabled={loading}
+            className="w-full bg-[#80d6d1] hover:bg-[#4f9e9a] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-lg transition-colors shadow-sm cursor-pointer"
           >
-            Cadastrar-se com o e-mail
+            {loading ? 'Registrando...' : 'Cadastrar-se'}
           </button>
         </form>
 
@@ -269,8 +582,11 @@ export const RegisterScreen: React.FC<RegisterProps> = ({ onBack, onRegistered, 
         </div>
 
         <button 
-          onClick={() => onRegistered('gmail-user@google.com')}
-          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 hover:bg-gray-50 py-3.5 rounded-lg transition-all shadow-sm cursor-pointer"
+          onClick={() => {
+            alert('Google Sign-up em desenvolvimento');
+          }}
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed py-3.5 rounded-lg transition-all shadow-sm cursor-pointer"
         >
           <img src={IMAGES.googleLogo} alt="Google" className="w-5 h-5" />
           <span className="text-sm font-semibold text-gray-700">Google</span>
@@ -283,7 +599,8 @@ export const RegisterScreen: React.FC<RegisterProps> = ({ onBack, onRegistered, 
         </p>
         <button 
           onClick={onHasAccount}
-          className="text-sm font-bold text-gray-800 hover:opacity-80 transition-opacity underline block mx-auto cursor-pointer"
+          disabled={loading}
+          className="text-sm font-bold text-gray-800 hover:opacity-80 disabled:opacity-50 transition-opacity underline block mx-auto cursor-pointer"
         >
           Já possuo cadastro
         </button>
@@ -291,6 +608,7 @@ export const RegisterScreen: React.FC<RegisterProps> = ({ onBack, onRegistered, 
     </div>
   );
 };
+
 
 interface RoleSelectProps {
   onBack: () => void;
