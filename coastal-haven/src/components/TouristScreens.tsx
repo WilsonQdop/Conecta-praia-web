@@ -332,7 +332,7 @@ export const EventDetailScreen: React.FC<EventDetailProps> = ({
   return (
     <div className="relative w-full h-full text-gray-900 bg-[#fbf9f8] overflow-y-auto no-scrollbar pb-32">
       {/* Dynamic Header actions */}
-      <header className="fixed top-2 left-0 right-0 z-50 px-4 py-2 flex justify-between items-center bg-transparent">
+      <header className="fixed top-15 left-0 right-0 z-50 px-4 py-2 flex justify-between items-center bg-transparent">
         <button 
           onClick={onBack}
           className="bg-white/95 p-2 rounded-full shadow-md text-gray-800 hover:bg-gray-100 transition-colors active:scale-95 cursor-pointer"

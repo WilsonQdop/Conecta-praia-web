@@ -11,7 +11,7 @@ interface WelcomeProps {
 
 export const WelcomeScreen: React.FC<WelcomeProps> = ({ onNext }) => {
   return (
-    <div className="relative w-full h-screen flex flex-col justify-end overflow-hidden bg-black text-white">
+    <div className="relative w-full h-219.5 flex flex-col justify-end overflow-hidden bg-black text-white">
       
       {/* Background Image - Agora cobrindo 100% do container absoluto por trás */}
       <div 
@@ -24,12 +24,12 @@ export const WelcomeScreen: React.FC<WelcomeProps> = ({ onNext }) => {
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 25, stiffness: 120 }}
-        className="relative z-10 w-full min-h-[35vh] bg-white text-gray-900 rounded-t-[32px] px-8 pt-6 pb-8 flex flex-col items-center justify-between text-center shadow-[0_-8px_30px_rgba(0,0,0,0.3)]"
+        className="relative z-10 w-full min-h-[35vh] bg-white text-gray-900 rounded-t-[32px] px-8 flex flex-col items-center justify-between text-center shadow-[0_-8px_30px_rgba(0,0,0,0.3)]"
       >
         {/* Handle superior do card simulando bottom sheet do iOS */}
-        <div className="w-12 h-1 bg-gray-200 rounded-full mb-4 flex-shrink-0" />
+        <div className="w-12 bg-gray-200 rounded-full flex-shrink-0" />
 
-        <div className="mb-6 max-w-[280px]">
+        <div className="max-w-[280px]">
           <h1 className="text-[22px] leading-tight font-extrabold text-gray-900 mb-2 tracking-tight">
             Descubra os sabores e histórias da nossa praia.
           </h1>
@@ -45,9 +45,7 @@ export const WelcomeScreen: React.FC<WelcomeProps> = ({ onNext }) => {
         >
           Começar
         </button>
-
-        {/* iOS Indicator spacer */}
-        <div className="w-32 h-1 bg-gray-200 rounded-full mt-4 flex-shrink-0" />
+        <div/>
       </motion.section>
     </div>
   );
@@ -405,13 +403,14 @@ export const RegisterScreen: React.FC<RegisterProps> = ({ onBack, onRegistered, 
   return (
     <div className="w-full h-full flex flex-col bg-white text-gray-800 p-6 overflow-y-auto no-scrollbar justify-between">
       <header className="flex justify-between items-center pt-4">
-        <span className="text-xs font-semibold text-gray-400">9:27</span>
         <button 
           onClick={onBack}
           className="flex items-center text-gray-500 hover:text-gray-950 text-sm font-medium gap-1.5 cursor-pointer"
-        >
-          <span>Voltar</span>
+        >      
+
           <LucideIcon name="ArrowLeft" size={16} />
+          <span>Voltar</span>
+
         </button>
       </header>
 
@@ -520,9 +519,8 @@ export const RegisterScreen: React.FC<RegisterProps> = ({ onBack, onRegistered, 
               disabled={loading}
               className="w-full px-4 py-3.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#80d6d1] focus:border-transparent outline-none text-sm font-medium transition-all text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value="TURISTA">🚀 Turista - Explorar experiências</option>
-              <option value="EMPREENDEDOR">🏪 Empreendedor - Oferecer serviços</option>
-              <option value="ADMIN">🛡️ Administrador - Gerenciar plataforma</option>
+              <option value="TURISTA"> Turista - Explorar experiências</option>
+              <option value="EMPREENDEDOR"> Empreendedor - Oferecer serviços</option>
             </select>
           </div>
 

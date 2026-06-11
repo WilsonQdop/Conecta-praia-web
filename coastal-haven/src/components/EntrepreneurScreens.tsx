@@ -24,16 +24,8 @@ export const EntrepreneurProfileScreen: React.FC<EntrepreneurProfileProps> = ({
     : '0.0';
 
   return (
-    <div className="w-full h-full bg-[#F8F4E8] text-gray-800 overflow-y-auto no-scrollbar pb-32 flex flex-col justify-between">
-      <div>
-        {/* Status Area */}
-        <header className="flex justify-between items-center px-6 pt-4 pb-2 text-xs font-semibold">
-          <span>9:27</span>
-          <div className="flex items-center gap-1.5">
-            <LucideIcon name="Wifi" size={13} />
-            <LucideIcon name="Battery" size={13} />
-          </div>
-        </header>
+    <div className="w-full h-full bg-[#F8F4E8] text-gray-800 overflow-hidden flex flex-col justify-between p-0">
+      <div className="flex-grow flex flex-col justify-start justify-items-stretch">
 
         {/* Back navigation */}
         <nav className="px-6 py-2">
@@ -61,7 +53,7 @@ export const EntrepreneurProfileScreen: React.FC<EntrepreneurProfileProps> = ({
         </section>
 
         {/* Grid Stats Block */}
-        <section className="px-6 py-6 font-sans">
+        <section className="px-6 py-2 font-sans">
           <div className="grid grid-cols-2 gap-4">
             
             {/* Card: Profile Score */}
@@ -116,7 +108,7 @@ export const EntrepreneurProfileScreen: React.FC<EntrepreneurProfileProps> = ({
         </section>
 
         {/* Promo creation button */}
-        <section className="px-6 pb-2">
+        <section className="px-6 pt-2">
           <button 
             onClick={() => onNavigate('create_activity')}
             className="w-full bg-[#006a66] hover:bg-[#00524f] text-white font-extrabold py-4 px-4 rounded-2xl text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
@@ -128,15 +120,13 @@ export const EntrepreneurProfileScreen: React.FC<EntrepreneurProfileProps> = ({
       </div>
 
       {/* Footer logouts */}
-      <footer className="px-6 pb-10 flex flex-col items-center">
+      <footer className="px-6 pt-68 pb-0 flex flex-col items-center mt-auto flex-shrink-0">
         <button 
           onClick={onLogout}
           className="bg-red-500 hover:bg-red-600 text-white font-extrabold py-3.5 px-10 rounded-full shadow-lg active:scale-95 transition-all text-xs uppercase tracking-wider cursor-pointer"
         >
           Sair do Perfil
         </button>
-
-        <div className="mt-8 w-32 h-1 bg-gray-400 rounded-full opacity-30" />
       </footer>
     </div>
   );

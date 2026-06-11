@@ -98,8 +98,7 @@ export const AdminProfileScreen: React.FC<AdminProfileProps> = ({ onBack, onLogo
           Sair do Sistema
         </button>
 
-        {/* Home iOS bar */}
-        <div className="mt-8 w-32 h-1 bg-black rounded-full opacity-20" />
+        <div/>
       </footer>
       
     </div>
