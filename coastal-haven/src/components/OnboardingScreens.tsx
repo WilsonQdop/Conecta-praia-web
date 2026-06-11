@@ -11,35 +11,26 @@ interface WelcomeProps {
 
 export const WelcomeScreen: React.FC<WelcomeProps> = ({ onNext }) => {
   return (
-    <div className="relative w-full h-full flex flex-col justify-between overflow-hidden bg-black text-white">
-      {/* Background Image */}
+    <div className="relative w-full h-screen flex flex-col justify-end overflow-hidden bg-black text-white">
+      
+      {/* Background Image - Agora cobrindo 100% do container absoluto por trás */}
       <div 
         className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-10000 ease-out scale-105"
-        style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.2)), url(${IMAGES.welcomeBg})` }}
+        style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.4)), url(${IMAGES.welcomeBg})` }}
       />
 
-      {/* Top Status Bar Filler */}
-      <div className="relative z-10 px-5 pt-3 pb-2 flex justify-between items-center text-white/90 text-xs font-semibold">
-        <span>9:27</span>
-        <div className="flex gap-1.5 items-center">
-          <LucideIcon name="Wifi" size={13} />
-          <LucideIcon name="Battery" size={13} />
-        </div>
-      </div>
-
-      <div className="flex-grow" />
-
-      {/* Card Content with entrance animation */}
+      {/* Card Content - Ajustado para ocupar 1/3 da tela (h-1/3) ou se ajustar perfeitamente ao fim */}
       <motion.section 
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 25, stiffness: 120 }}
-        className="relative z-10 bg-white text-gray-900 rounded-t-[32px] px-8 pt-8 pb-10 flex flex-col items-center text-center shadow-[0_-8px_30px_rgba(0,0,0,0.1)]"
+        className="relative z-10 w-full min-h-[35vh] bg-white text-gray-900 rounded-t-[32px] px-8 pt-6 pb-8 flex flex-col items-center justify-between text-center shadow-[0_-8px_30px_rgba(0,0,0,0.3)]"
       >
-        <div className="w-12 h-1 bg-gray-200 rounded-full mb-6" />
+        {/* Handle superior do card simulando bottom sheet do iOS */}
+        <div className="w-12 h-1 bg-gray-200 rounded-full mb-4 flex-shrink-0" />
 
-        <div className="mb-8 max-w-[280px]">
-          <h1 className="text-[23px] leading-tight font-extrabold text-gray-900 mb-3 tracking-tight">
+        <div className="mb-6 max-w-[280px]">
+          <h1 className="text-[22px] leading-tight font-extrabold text-gray-900 mb-2 tracking-tight">
             Descubra os sabores e histórias da nossa praia.
           </h1>
           <p className="text-sm text-gray-500 font-medium leading-snug">
@@ -56,7 +47,7 @@ export const WelcomeScreen: React.FC<WelcomeProps> = ({ onNext }) => {
         </button>
 
         {/* iOS Indicator spacer */}
-        <div className="w-32 h-1 bg-gray-200 rounded-full mt-6 -mb-6" />
+        <div className="w-32 h-1 bg-gray-200 rounded-full mt-4 flex-shrink-0" />
       </motion.section>
     </div>
   );
