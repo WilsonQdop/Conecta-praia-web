@@ -9,6 +9,8 @@ import br.com.uninassau.LEI.ConectaPraia.dto.RegisterResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.dto.request.LoginRequestDTO;
 import br.com.uninassau.LEI.ConectaPraia.dto.request.RegisterRequestDTO;
 import br.com.uninassau.LEI.ConectaPraia.repositories.UserRepository;
+import br.com.uninassau.LEI.ConectaPraia.utils.AuthUtil;
+
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,11 +21,13 @@ public class AuthService {
     private final TokenService tokenService;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncryption;
+    private final AuthUtil authUtil;  
 
-    public AuthService(TokenService tokenService, UserRepository userRepository, BCryptPasswordEncoder passwordEncryption) {
+    public AuthService(TokenService tokenService, UserRepository userRepository, BCryptPasswordEncoder passwordEncryption, AuthUtil authUtil) {
         this.tokenService = tokenService;
         this.userRepository = userRepository;
         this.passwordEncryption = passwordEncryption;
+        this.authUtil = authUtil;
     }
 
     public LoginResponseDTO login (LoginRequestDTO login) {
@@ -60,4 +64,8 @@ public class AuthService {
         userRepository.save(user);
         return new RegisterResponseDTO(user.getName(), user.getEmail(), user.getRole());
     }
+    public void deleteCurrentUser() {
+        User user = authUtil.getUserLoggedIn();
+        userRepository.delete(user);
+}
 }

@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { LucideIcon } from './LucideIcon';
 import { Review, UserRole } from '../types';
 import { IMAGES } from '../data';
-import { postServiceService, postEventService, PostServiceResponseDTO, PostEventResponseDTO, entrepreneurService } from '../services/api';
+import { postServiceService, postEventService, PostServiceResponseDTO, PostEventResponseDTO, entrepreneurService, authService } from '../services/api';
 import React, { useRef, useState } from 'react';
 
 
@@ -644,6 +644,25 @@ export const UpdateEntrepreneurProfileScreen: React.FC<UpdateEntrepreneurProfile
         >
           {loading ? 'Salvando...' : 'Salvar Dados da Empresa'}
         </button>
+
+        <button
+  onClick={async () => {
+    if (confirm('Tem certeza? Isso irá deletar TODOS os seus dados permanentemente!')) {
+      try {
+        await authService.deleteAccount();
+        alert('Conta deletada com sucesso');
+        localStorage.clear();
+        window.location.reload();
+      } catch (error: any) {
+        alert(error.response?.data?.message || 'Erro ao deletar conta');
+      }
+    }
+  }}
+  className="w-full bg-red-600 hover:bg-red-700 text-white font-extrabold py-3 rounded-xl text-xs uppercase tracking-wider cursor-pointer mt-4"
+>
+  Excluir Minha Conta
+</button>
+
       </div>
     </div>
   );

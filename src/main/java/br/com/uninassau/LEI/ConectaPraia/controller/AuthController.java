@@ -6,6 +6,7 @@ import br.com.uninassau.LEI.ConectaPraia.dto.request.LoginRequestDTO;
 import br.com.uninassau.LEI.ConectaPraia.dto.request.RegisterRequestDTO;
 import br.com.uninassau.LEI.ConectaPraia.service.auth.AuthService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,9 +30,12 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<RegisterResponseDTO> register(@RequestBody RegisterRequestDTO register) {
-        // ✅ CORRIGIDO: Agora aceita qualquer role (TURISTA, EMPREENDEDOR, ADMIN)
-        // Se quiser restringir, adicione validação aqui
         RegisterResponseDTO response = authService.register(register);
         return ResponseEntity.created(null).body(response);
+    }
+    @DeleteMapping("/delete-account")
+    public ResponseEntity<Void> deleteAccount() {
+        authService.deleteCurrentUser();
+        return ResponseEntity.noContent().build();
     }
 }

@@ -108,6 +108,17 @@ export const authService = {
     localStorage.removeItem('userRole');
     localStorage.removeItem('userName');
   },
+
+  async deleteAccount(): Promise<void> {
+    try {
+      await apiClient.delete('/auth/delete-account');
+      localStorage.clear();
+    } catch (error) {
+      console.error('Erro ao deletar conta:', error);
+      throw error;
+    }
+  },
+
 };
 
 export interface TouristSubscribeResponseDTO {

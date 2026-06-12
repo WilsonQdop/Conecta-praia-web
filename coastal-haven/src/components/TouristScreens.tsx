@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { LucideIcon } from './LucideIcon';
 import { LocalActivity, Appointment, Review } from '../types';
 import { ACTIVITIES, IMAGES } from '../data';
-import { PostEventResponseDTO, postEventService, PostServiceResponseDTO, postServiceService, registeredService, subscriptionService, touristService, uploadService } from '../services/api';
+import { authService, PostEventResponseDTO, postEventService, PostServiceResponseDTO, postServiceService, registeredService, subscriptionService, touristService, uploadService } from '../services/api';
 import { adminService,} from '../services/api';
 
 // =================================================================
@@ -454,7 +454,7 @@ export const EventDetailScreen: React.FC<EventDetailProps> = ({
     <div className="relative w-full h-full text-gray-900 bg-[#fbf9f8] overflow-y-auto no-scrollbar pb-32">
       
       <header className="fixed top-4 left-0 right-0 z-50 px-4 flex justify-between items-center">
-        <button onClick={onBack} className="bg-white/95 p-2 rounded-full shadow-md cursor-pointer">
+        <button onClick={() => onNavigate('events_services')} className="bg-white/95 p-2 rounded-full shadow-md cursor-pointer">
           <LucideIcon name="ArrowLeft" size={20} />
         </button>
         <button onClick={() => onToggleFavorite(activityId)} className="bg-white/95 p-2 rounded-full shadow-md cursor-pointer">
@@ -577,7 +577,7 @@ export const ServiceDetailScreen: React.FC<ServiceDetailProps> = ({
     <div className="relative w-full h-full text-gray-900 bg-[#fbf9f8] overflow-y-auto no-scrollbar pb-32">
 
       <header className="fixed top-4 left-0 right-0 z-50 px-4 flex justify-between items-center">
-        <button onClick={onBack} className="bg-white/95 p-2 rounded-full shadow-md cursor-pointer">
+        <button onClick={() => onNavigate('events_services')} className="bg-white/95 p-2 rounded-full shadow-md cursor-pointer">
           <LucideIcon name="ArrowLeft" size={20} />
         </button>
         <button onClick={() => onToggleFavorite(activityId)} className="bg-white/95 p-2 rounded-full shadow-md cursor-pointer">
@@ -1030,6 +1030,23 @@ export const TouristProfileScreen: React.FC<TouristProfileProps> = ({
           Sair da Conta
         </button>
         
+        <button
+          onClick={async () => {
+            if (confirm('Tem certeza? Isso irá deletar TODOS os seus dados permanentemente!')) {
+              try {
+                await authService.deleteAccount();
+                alert('Conta deletada com sucesso');
+                localStorage.clear();
+                window.location.reload();
+              } catch (error: any) {
+                alert(error.response?.data?.message || 'Erro ao deletar conta');
+              }
+            }
+          }}
+          className="w-full bg-red-600 hover:bg-red-700 text-white font-extrabold py-3 rounded-xl text-xs uppercase tracking-wider cursor-pointer mt-4"
+        >
+          Excluir Minha Conta
+        </button>
         <p className="text-[10px] font-bold text-gray-300 uppercase tracking-tighter">
           Porto de Galinhas App • v1.0.4
         </p>
