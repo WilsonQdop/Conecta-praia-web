@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -63,6 +64,28 @@ public class PostServiceService {
                 .map(this.convertDTO::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
+    public void deleteById(String id) {
+    // Converte String para UUID
+    UUID uuid;
+    try {
+        uuid = UUID.fromString(id);
+    } catch (IllegalArgumentException e) {
+        throw new RuntimeException("ID inválido: " + id);
+    }
+    
+    // Verifica se o serviço existe
+    PostsService service = postServiceRepository.findById(uuid)
+        .orElseThrow(() -> new RuntimeException("Serviço não encontrado com ID: " + id));
+    
+    // Verifica se o usuário logado é o dono do serviço
+    Entrepreneur entrepreneur = (Entrepreneur) this.authUtil.getUserLoggedIn();
+    if (!service.getEntrepreneur().getEmail().equals(entrepreneur.getEmail())) {
+        throw new RuntimeException("Você não tem permissão para deletar este serviço");
+    }
+    
+    // Deleta o serviço
+    postServiceRepository.delete(service);
+}
 
 
 

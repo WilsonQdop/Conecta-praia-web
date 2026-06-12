@@ -34,5 +34,10 @@ public class PostEventController {
         List<PostEventResponseDTO> events = this.postEventService.findAllEventsByEntrepreneur();
         return ResponseEntity.ok(events);
     }
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Void> deleteEvent(@PathVariable String id) {
+        postEventService.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
 
 }

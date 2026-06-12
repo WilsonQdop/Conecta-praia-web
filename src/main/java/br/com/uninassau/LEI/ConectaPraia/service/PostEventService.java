@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -62,7 +63,27 @@ public class PostEventService {
                 .map(this.convertDTO::convertToEventResponseDTO)
                 .collect(Collectors.toList());
     }
-
-
+    public void deleteById(String id) {
+    // Converte String para UUID
+    UUID uuid;
+    try {
+        uuid = UUID.fromString(id);
+    } catch (IllegalArgumentException e) {
+        throw new RuntimeException("ID inválido: " + id);
+    }
+    
+    // Verifica se o evento existe
+    PostsEvent event = postEventRepository.findById(uuid)
+        .orElseThrow(() -> new RuntimeException("Evento não encontrado com ID: " + id));
+    
+    // Verifica se o usuário logado é o dono do evento
+    Entrepreneur entrepreneur = (Entrepreneur) this.authUtil.getUserLoggedIn();
+    if (!event.getEntrepreneur().getEmail().equals(entrepreneur.getEmail())) {
+        throw new RuntimeException("Você não tem permissão para deletar este evento");
+    }
+    
+    // Deleta o evento
+    postEventRepository.delete(event);
+}
 
 }
