@@ -18,7 +18,7 @@ export const CreateActivityScreen: React.FC<CreateActivityProps> = ({
   const [date, setDate] = useState('');
   const [location, setLocation] = useState('');
   const [price, setPrice] = useState('');
-  const [category, setCategory] = useState<LocalActivity['category']>('Geral');
+  const [category, setCategory] = useState<LocalActivity['category']>('GERAL');
   const [details, setDetails] = useState('');
   
   // Para upload de arquivo
@@ -31,16 +31,16 @@ export const CreateActivityScreen: React.FC<CreateActivityProps> = ({
   // Categorias dinâmicas baseadas no tipo
   const getCategories = (): LocalActivity['category'][] => {
     if (type === 'servico') {
-      return ['Geral', 'RESTAURANTE', 'Bares', 'Autônomos'];
+      return ['GERAL', 'BARRAQUEIRO', 'BUGUEIRO', 'BAR', 'RESTAURANTE', 'ARTESANATO', 'COMERCIOLOCAL'];
     } else {
-      return ['Geral', 'Surf', 'Caminhada', 'Ciclismo', 'Corrida'];
+      return ['GERAL', 'SURF', 'CAMINHADA', 'CICLISMO', 'CORRIDA', 'FITDANCE', 'TRILHA'];
     }
   };
 
   // Ao mudar tipo, resetar categoria
   const handleTypeChange = (newType: 'evento' | 'servico') => {
     setType(newType);
-    setCategory('Geral');
+    setCategory('GERAL');
   };
 
   // Preset suggestion images based on categories

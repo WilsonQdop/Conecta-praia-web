@@ -5,6 +5,9 @@ public enum TypeEvent {
     CORRIDA,
     CAMINHADA,
     SURF,
+    RESTAURANTE,
+    AUTÔNOMOS,
+    GERAL,
     FITDANCE,
     TRILHA
 }

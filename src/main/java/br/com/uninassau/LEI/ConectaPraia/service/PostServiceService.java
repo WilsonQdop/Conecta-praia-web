@@ -2,7 +2,6 @@ package br.com.uninassau.LEI.ConectaPraia.service;
 
 import br.com.uninassau.LEI.ConectaPraia.domain.Entrepreneur;
 import br.com.uninassau.LEI.ConectaPraia.domain.PostsService;
-import br.com.uninassau.LEI.ConectaPraia.domain.User;
 import br.com.uninassau.LEI.ConectaPraia.dto.CreatePostServiceResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.dto.PostServiceResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.dto.request.CreatePostServiceRequestDTO;

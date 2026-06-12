@@ -19,7 +19,7 @@ services:
     container_name: spring-app-ConectaPraia
     ports:
       - "8080:8080"
-      - "5432:5432"
+  
     depends_on:
       db:
         condition: service_healthy

@@ -2,8 +2,6 @@ package br.com.uninassau.LEI.ConectaPraia.service;
 
 import br.com.uninassau.LEI.ConectaPraia.domain.Registered;
 import br.com.uninassau.LEI.ConectaPraia.domain.Tourist;
-import br.com.uninassau.LEI.ConectaPraia.dto.PostEventResponseDTO;
-import br.com.uninassau.LEI.ConectaPraia.dto.PostServiceResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.dto.RegisteredEventResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.dto.RegisteredServiceResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.repositories.RegisteredRepository;

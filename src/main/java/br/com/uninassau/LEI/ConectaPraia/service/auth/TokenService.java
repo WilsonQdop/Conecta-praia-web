@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class TokenService {
@@ -22,9 +24,14 @@ public class TokenService {
         try {
             Algorithm algorithm = Algorithm.HMAC256(keySecret);
 
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("authorities", "ROLE_" + user.getRole().name());
+            claims.put("role", user.getRole().name());
+
             return JWT.create()
                     .withIssuer("ConectaPraia")
                     .withSubject(user.getEmail())
+                    .withPayload(claims)  // ⭐ Adiciona os claims com o role
                     .withExpiresAt(this.GenerateExpirationDate())
                     .sign(algorithm);
 

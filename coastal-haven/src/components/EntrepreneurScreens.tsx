@@ -396,43 +396,90 @@ export const EntrepreneurServicesScreen: React.FC<EntrepreneurServicesProps> = (
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     key={item.id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all cursor-pointer active:scale-95"
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all relative"
                   >
-                    <div className="relative w-full h-40 bg-gray-200 overflow-hidden">
-                      <img src={imageUrl} alt={item.title} className="w-full h-full object-cover" />
-                      <div className="absolute top-2 right-2">
-                        <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full ${
-                          isEvent ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
-                        }`}>
-                          {isEvent ? item.eventType : item.serviceType}
-                        </span>
+                    {/* Área clicável do card - AGORA COM CONTEÚDO DENTRO */}
+                    <div 
+                      className="cursor-pointer active:scale-95"
+                      onClick={() => {
+                        console.log('Card clicado:', item.id);
+                        // onNavigate?.(`detail_${item.id}`); // Descomente se tiver navegação
+                      }}
+                    >
+                      <div className="relative w-full h-40 bg-gray-200 overflow-hidden">
+                        <img src={imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                        
+                        {/* Badge da categoria */}
+                        <div className="absolute top-2 right-2">
+                          <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full ${
+                            isEvent ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {isEvent ? item.eventType : item.serviceType}
+                          </span>
+                        </div>
+
+                        {/* Data */}
+                        <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1">
+                          <LucideIcon name="Calendar" size={12} className="text-white" />
+                          <span className="text-[11px] font-bold text-white">
+                            {new Date(item.createdAt).toLocaleDateString('pt-BR')}
+                          </span>
+                        </div>
                       </div>
-                      <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1">
-                        <LucideIcon name="Calendar" size={12} className="text-white" />
-                        <span className="text-[11px] font-bold text-white">
-                          {new Date(item.createdAt).toLocaleDateString('pt-BR')}
-                        </span>
+
+                      <div className="p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-extrabold text-sm text-gray-900 flex-1 leading-snug">{item.title}</h3>
+                          <span className="text-xs font-bold text-[#006a66] whitespace-nowrap ml-2">{item.valueDescription}</span>
+                        </div>
+                        <p className="text-[11px] text-gray-600 line-clamp-2 mb-3">{item.description}</p>
+                        <div className="flex items-center justify-between text-[10px] text-gray-500 border-t border-gray-100 pt-2">
+                          <span className="flex items-center gap-1">
+                            <LucideIcon name="MapPin" size={10} />
+                            {item.location}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <LucideIcon name="User" size={10} />
+                            {item.entrepreneurName}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-extrabold text-sm text-gray-900 flex-1 leading-snug">{item.title}</h3>
-                        <span className="text-xs font-bold text-[#006a66] whitespace-nowrap ml-2">{item.valueDescription}</span>
-                      </div>
-                      <p className="text-[11px] text-gray-600 line-clamp-2 mb-3">{item.description}</p>
-                      <div className="flex items-center justify-between text-[10px] text-gray-500 border-t border-gray-100 pt-2">
-                        <span className="flex items-center gap-1">
-                          <LucideIcon name="MapPin" size={10} />
-                          {item.location}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <LucideIcon name="User" size={10} />
-                          {item.entrepreneurName}
-                        </span>
-                      </div>
-                    </div>
-                  </motion.article>
+                    {/* BOTÃO DELETAR - FORA da div clicável */}
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        console.log('🔴 BOTÃO CLICADO! ID:', item.id);
+                        if (confirm(`Tem certeza que deseja deletar "${item.title}"?`)) {
+                          try {
+                            if (isEvent) {
+                              await postEventService.deleteEvent(item.id);
+                              setEvents(prev => prev.filter(e => e.id !== item.id));
+                            } else {
+                              await postServiceService.deleteService(item.id);
+                              setServices(prev => prev.filter(s => s.id !== item.id));
+                            }
+                            alert('Item deletado com sucesso!');
+                          } catch (error: any) {
+                            alert(error.response?.data?.message || 'Erro ao deletar');
+                          }
+                        }
+                      }}
+                      className="absolute top-2 left-2 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md transition-colors z-50 cursor-pointer flex items-center justify-center"
+                      style={{ 
+                        width: '36px', 
+                        height: '36px',
+                        position: 'absolute',
+                        top: '8px',
+                        left: '8px',
+                        zIndex: 9999
+                      }}
+                    >
+                      <LucideIcon name="Trash2" size={18} />
+                    </button>
+</motion.article>
                 );
               })
             )}

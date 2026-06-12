@@ -4,7 +4,6 @@ package br.com.uninassau.LEI.ConectaPraia.service;
 import br.com.uninassau.LEI.ConectaPraia.domain.Entrepreneur;
 import br.com.uninassau.LEI.ConectaPraia.domain.PostsService;
 import br.com.uninassau.LEI.ConectaPraia.repositories.PostServiceRepository;
-import jakarta.validation.constraints.Size;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;

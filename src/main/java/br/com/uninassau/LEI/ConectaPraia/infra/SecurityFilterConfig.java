@@ -34,6 +34,8 @@ public class SecurityFilterConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/postService/delete/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/postEvent/delete/**").authenticated()
                         .requestMatchers("/Uploads_imagens/**").permitAll()
                         .requestMatchers("/admin/all-events", "/admin/all-services").hasAnyRole("ADMIN", "TURISTA")
                         .requestMatchers("/admin/**").hasRole("ADMIN")

@@ -292,6 +292,15 @@ export interface ReviewRequest {
   comment: string;
 }
 
+export interface ReviewResponseDTO {
+  id: string;
+  userName: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
+
+
 export const reviewService = {
   async reviewService(serviceId: string, reviewData: ReviewRequest): Promise<void> {
     try {
@@ -325,6 +334,25 @@ export const reviewService = {
       await apiClient.post(`/reviews/entrepreneurs/${entrepreneurId}`, reviewData);
     } catch (error) {
       console.error('Erro ao avaliar empreendedor:', error);
+      throw error;
+    }
+  },
+  async getServiceReviews(serviceId: string): Promise<ReviewResponseDTO[]> {
+    try {
+      const response = await apiClient.get(`/reviews/services/${serviceId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar avaliações do serviço:', error);
+      throw error;
+    }
+  },
+
+  async getEventReviews(eventId: string): Promise<ReviewResponseDTO[]> {
+    try {
+      const response = await apiClient.get(`/reviews/events/${eventId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar avaliações do evento:', error);
       throw error;
     }
   },
@@ -414,6 +442,15 @@ export const postServiceService = {
       throw error;
     }
   },
+
+   async deleteService(serviceId: string): Promise<void> {
+    try {
+      await apiClient.delete(`/postService/delete/${serviceId}`);
+    } catch (error) {
+      console.error('Erro ao deletar serviço:', error);
+      throw error;
+    }
+  },
 };
 
 export const postEventService = {
@@ -456,7 +493,14 @@ export const postEventService = {
       throw error;
     }
   },
-   
+  async deleteEvent(eventId: string): Promise<void> {
+    try {
+      await apiClient.delete(`/postEvent/delete/${eventId}`);
+    } catch (error) {
+      console.error('Erro ao deletar evento:', error);
+      throw error;
+    }
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════

@@ -24,7 +24,9 @@ export interface LocalActivity {
   reviewsCount: string;
   image: string;
   details: string;
-  category: 'Ciclismo' | 'Corrida' | 'Caminhada' | 'Surf' | 'RESTAURANTE' | 'Bares' | 'Autônomos' | 'Geral';
+  category: 'CICLISMO' | 'CORRIDA' | 'CAMINHADA' | 'SURF' | 'RESTAURANTE' |
+   'AUTÔNOMOS' | 'GERAL' | 'FITDANCE' | 'TRILHA'| 'BARRAQUEIRO' | 'BUGUEIRO' 
+   | 'BAR' | 'ARTESANATO' | 'COMERCIOLOCAL';
   type: 'evento' | 'servico';
   isCustom?: boolean;
 }
