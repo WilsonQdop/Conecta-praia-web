@@ -37,34 +37,26 @@ export const PhoneSimulator: React.FC = () => {
   // 🔐 VERIFICAR SESSÃO ANTERIOR AO CARREGAR
   // ════════════════════════════════════════════════════════════════
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userEmail = localStorage.getItem('userEmail');
-    const userRole = localStorage.getItem('userRole');
-    const userName = localStorage.getItem('userName');
-    const [currentScreen, setCurrentScreen] = useState<string>('entrepreneur_profile');
-    
+  const token = localStorage.getItem('token');
+  const userEmail = localStorage.getItem('userEmail');
+  const userRole = localStorage.getItem('userRole');
+  const userName = localStorage.getItem('userName');
+  // ✅ Linha removida — não precisa dela aqui
 
-    console.log('[SESSION] Verificando sessão anterior...');
+  if (token && userEmail && userRole) {
+    const mappedRole = mapBackendRoleToFrontend(userRole);
+    const nextScreen = getScreenByRole(mappedRole);
 
-    // Simples: se tem token e email e role, restaura
-    if (token && userEmail && userRole) {
-      console.log('[SESSION] Sessão encontrada para:', userEmail);
-      
-      const mappedRole = mapBackendRoleToFrontend(userRole);
-      const nextScreen = getScreenByRole(mappedRole);
-
-      setState(prev => ({
-        ...prev,
-        isLoggedIn: true,
-        currentUserEmail: userEmail,
-        currentRole: mappedRole,
-        currentScreen: nextScreen,
-        currentUserName: userName || '',
-      }));
-    } else {
-      console.log('[SESSION] Nenhuma sessão anterior');
-    }
-  }, []);
+    setState(prev => ({
+      ...prev,
+      isLoggedIn: true,
+      currentUserEmail: userEmail,
+      currentRole: mappedRole,
+      currentScreen: nextScreen,
+      currentUserName: userName || '',
+    }));
+  }
+}, []);
 
   // ════════════════════════════════════════════════════════════════
   // 🎯 MAPEAR ROLE DO BACKEND PARA FRONTEND
