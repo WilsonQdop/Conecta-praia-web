@@ -437,6 +437,30 @@ export const postEventService = {
 // ═══════════════════════════════════════════════════════════════
 
 export const adminService = {
+
+  
+  async getAllTourists(): Promise<TouristResponseDTO[]> {
+    try {
+      console.log('[API] GET /admin/technical/findAll');
+      const response = await apiClient.get<TouristResponseDTO[]>('/admin/technical/findAll');
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar turistas:', error);
+      throw error;
+    }
+  },
+
+  async getAllEntrepreneurs(): Promise<EntrepreneurResponseDTO[]> {
+    try {
+      console.log('[API] GET /admin/customer/findAll');
+      const response = await apiClient.get<EntrepreneurResponseDTO[]>('/admin/customer/findAll');
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar empreendedores:', error);
+      throw error;
+    }
+  },
+  
   async getAllServices(): Promise<PostServiceResponseDTO[]> {
     try {
       const response = await apiClient.get<PostServiceResponseDTO[]>('/admin/all-services');
@@ -517,5 +541,25 @@ export const registeredService = {
     return registeredEvent.getMyRegisteredServices();
   }
 };
+
+export interface TouristResponseDTO {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: 'TURISTA' | 'EMPREENDEDOR' | 'ADMIN';
+  cpf: string;
+  profilePicture?: string;
+}
+
+export interface EntrepreneurResponseDTO {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: 'TURISTA' | 'EMPREENDEDOR' | 'ADMIN';
+  cpf: string;
+  profilePicture?: string;
+}
 
 export default apiClient;

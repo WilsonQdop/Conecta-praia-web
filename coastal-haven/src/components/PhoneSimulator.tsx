@@ -10,7 +10,7 @@ import { WelcomeScreen, LoginScreen, RegisterScreen, RoleSelectScreen } from './
 
 import { TouristSearchScreen, InteractiveMapScreen, EventDetailScreen, ServiceDetailScreen, RatingModal, AppointmentsScreen, EventsAndServicesScreen, TouristProfileScreen } from './TouristScreens';
 import { EntrepreneurProfileScreen, ReviewsManagementScreen, EntrepreneurServicesScreen } from './EntrepreneurScreens';
-import { AdminAllActivitiesScreen, AdminProfileScreen } from './AdminScreens';
+import { AdminAllActivitiesScreen, AdminAllUsersScreen, AdminProfileScreen } from './AdminScreens';
 import { CreateActivityScreen } from './CreateActivityScreen';
 import { IMAGES, ACTIVITIES, INITIAL_REVIEWS, INITIAL_APPOINTMENTS } from '../data';
 import { authService, eventService, serviceService, reviewService, subscriptionService } from '../services/api';
@@ -348,6 +348,14 @@ const handleLogin = async (email: string, role: UserRole, name: string) => {
       onNavigate={changeScreen}
     />
   );
+
+  case 'admin_all_users':
+  return (
+    <AdminAllUsersScreen
+      onBack={() => changeScreen('admin_profile')}
+      onNavigate={changeScreen}
+    />
+  );
       
       case 'role_select':
         return (
@@ -431,6 +439,7 @@ const handleLogin = async (email: string, role: UserRole, name: string) => {
             onBack={() => changeScreen('welcome')}
             onLogout={handleLogout}
             onNavigate={changeScreen}
+            
           />
         );
       

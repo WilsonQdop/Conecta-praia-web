@@ -4,6 +4,7 @@ import { IMAGES } from '../data';
 import { motion } from 'motion/react';
 import { adminService, PostServiceResponseDTO, PostEventResponseDTO } from '../services/api';
 
+
 interface AdminProfileProps {
   onBack: () => void;
   onLogout: () => void;
@@ -70,6 +71,17 @@ export const AdminProfileScreen: React.FC<AdminProfileProps> = ({
             </span>
             <LucideIcon name="ChevronRight" size={14} />
           </button>
+
+          <button
+    onClick={() => onNavigate('admin_all_users')}
+    className="w-full text-left px-4 py-4 bg-[#80d6d1] hover:brightness-105 rounded-2xl text-gray-950 font-black text-xs uppercase tracking-wide transition-all shadow-md flex items-center justify-between cursor-pointer"
+  >
+    <span className="flex items-center gap-2">
+      <LucideIcon name="Users" size={16} />
+      <span>Monitorar Usuários</span>
+    </span>
+    <LucideIcon name="ChevronRight" size={14} />
+  </button>
 
           <button 
             onClick={() => alert(`Visualizando credenciais de Administrador:\nNome: ${adminName}\nNível: Nível 3 (Root)\nPermissões: Total`)}
@@ -430,3 +442,367 @@ export const AdminAllActivitiesScreen: React.FC<AdminAllActivitiesProps> = ({
     </div>
   );
 };
+
+
+// ════════════════════════════════════════════════════════════════
+// 📌 DTOs — ajuste conforme os tipos reais do seu back-end
+// ════════════════════════════════════════════════════════════════
+export interface TouristUserResponseDTO {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  city?: string;
+  createdAt: string;
+  avatarUrl?: string;
+}
+
+export interface EntrepreneurUserResponseDTO {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  businessName?: string;
+  city?: string;
+  createdAt: string;
+  avatarUrl?: string;
+}
+
+// ════════════════════════════════════════════════════════════════
+// 🔧 Adicione estes dois métodos ao seu adminService:
+//
+//   getAllTourists(): Promise<TouristUserResponseDTO[]>
+//   getAllEntrepreneurs(): Promise<EntrepreneurUserResponseDTO[]>
+// ════════════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════════════
+// 👤 Card de usuário reutilizável
+// ════════════════════════════════════════════════════════════════
+interface UserCardProps {
+  user: (TouristUserResponseDTO | EntrepreneurUserResponseDTO) & { type: 'tourist' | 'entrepreneur' };
+}
+
+const UserCard: React.FC<UserCardProps> = ({ user }) => {
+  const isTourist = user.type === 'tourist';
+  const entrepreneur = user as EntrepreneurUserResponseDTO;
+
+  return (
+    <motion.article
+      layout
+      initial={{ scale: 0.95, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all"
+    >
+      <div className="p-4 flex items-center gap-3">
+        {/* Avatar */}
+        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
+          {user.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt={user.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          ) : (
+            <LucideIcon name="User" size={24} className="text-gray-400" />
+          )}
+          {/* Badge tipo */}
+          <span
+            className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${
+              isTourist ? 'bg-[#80d6d1]' : 'bg-purple-400'
+            }`}
+          >
+            <LucideIcon
+              name={isTourist ? 'Compass' : 'Briefcase'}
+              size={8}
+              className="text-white"
+            />
+          </span>
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h3 className="font-extrabold text-sm text-gray-900 leading-snug truncate">
+                {user.name}
+              </h3>
+              {!isTourist && entrepreneur.businessName && (
+                <p className="text-[10px] text-purple-600 font-bold truncate">
+                  {entrepreneur.businessName}
+                </p>
+              )}
+              <p className="text-[10px] text-gray-400 truncate">{user.email}</p>
+            </div>
+
+            {/* Badge tipo */}
+            <span
+              className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${
+                isTourist
+                  ? 'bg-[#80d6d1]/20 text-[#006a66]'
+                  : 'bg-purple-100 text-purple-700'
+              }`}
+            >
+              {isTourist ? 'Turista' : 'Empreendedor'}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between mt-2 text-[10px] text-gray-400 border-t border-gray-100 pt-2">
+            {user.city && (
+              <span className="flex items-center gap-1">
+                <LucideIcon name="MapPin" size={10} />
+                {user.city}
+              </span>
+            )}
+            <span className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded ml-auto">
+              <LucideIcon name="Calendar" size={10} />
+              {new Date(user.createdAt).toLocaleDateString('pt-BR')}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer com ID */}
+      <div className="px-4 py-2 bg-gray-50 border-t border-gray-100">
+        <span className="flex items-center gap-1 text-[10px] text-gray-400">
+          <LucideIcon name="Shield" size={10} className="text-yellow-500" />
+          ID: {user.id.substring(0, 8)}...
+        </span>
+      </div>
+    </motion.article>
+  );
+};
+
+// ════════════════════════════════════════════════════════════════
+// 🖥️ Tela principal — AdminAllUsersScreen
+// ════════════════════════════════════════════════════════════════
+interface AdminAllUsersProps {
+  onBack: () => void;
+  onNavigate: (screen: string) => void;
+}
+
+export const AdminAllUsersScreen: React.FC<AdminAllUsersProps> = ({ onBack }) => {
+  const [tourists, setTourists] = React.useState<TouristUserResponseDTO[]>([]);
+  const [entrepreneurs, setEntrepreneurs] = React.useState<EntrepreneurUserResponseDTO[]>([]);
+  const [selectedFilter, setSelectedFilter] = React.useState<'Todos' | 'Turistas' | 'Empreendedores'>('Todos');
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = React.useState('');
+
+  // ──────────────────────────────────────────────────────────────
+  // 📥 Carregar usuários
+  // ──────────────────────────────────────────────────────────────
+  React.useEffect(() => {
+    const loadAllUsers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        console.log('[ADMIN_USERS] Carregando todos os usuários...');
+
+        // 🔵 Buscar todos os turistas
+        // Substitua por: await adminService.getAllTourists()
+        const allTourists: TouristUserResponseDTO[] = await (adminService as any).getAllTourists();
+        console.log('[ADMIN_USERS] ✅ Turistas carregados:', allTourists.length);
+        setTourists(allTourists);
+
+        // 🟣 Buscar todos os empreendedores
+        // Substitua por: await adminService.getAllEntrepreneurs()
+        const allEntrepreneurs: EntrepreneurUserResponseDTO[] = await (adminService as any).getAllEntrepreneurs();
+        console.log('[ADMIN_USERS] ✅ Empreendedores carregados:', allEntrepreneurs.length);
+        setEntrepreneurs(allEntrepreneurs);
+
+        setLoading(false);
+      } catch (err: any) {
+        console.error('[ADMIN_USERS] ❌ Erro ao carregar usuários:', err);
+        setError(
+          err.response?.data?.message || err.message || 'Erro ao carregar usuários do sistema'
+        );
+        setLoading(false);
+        setTourists([]);
+        setEntrepreneurs([]);
+      }
+    };
+
+    loadAllUsers();
+  }, []);
+
+  // ──────────────────────────────────────────────────────────────
+  // 🔄 Filtrar e buscar
+  // ──────────────────────────────────────────────────────────────
+  const filteredContent = React.useMemo(() => {
+    let content: ((TouristUserResponseDTO | EntrepreneurUserResponseDTO) & {
+      type: 'tourist' | 'entrepreneur';
+    })[] = [];
+
+    if (selectedFilter === 'Turistas' || selectedFilter === 'Todos') {
+      content.push(...tourists.map((t) => ({ ...t, type: 'tourist' as const })));
+    }
+
+    if (selectedFilter === 'Empreendedores' || selectedFilter === 'Todos') {
+      content.push(...entrepreneurs.map((e) => ({ ...e, type: 'entrepreneur' as const })));
+    }
+
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      content = content.filter(
+        (item) =>
+          item.name.toLowerCase().includes(term) ||
+          item.email.toLowerCase().includes(term) ||
+          (item.city && item.city.toLowerCase().includes(term)) ||
+          ((item as EntrepreneurUserResponseDTO).businessName &&
+            (item as EntrepreneurUserResponseDTO).businessName!.toLowerCase().includes(term))
+      );
+    }
+
+    return content;
+  }, [selectedFilter, tourists, entrepreneurs, searchTerm]);
+
+  // ──────────────────────────────────────────────────────────────
+  // 🎨 Loading state
+  // ──────────────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="w-full h-full bg-[#fbf9f8] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#006a66] mx-auto mb-3" />
+          <p className="text-xs text-gray-500">Carregando usuários do sistema...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // 🎨 Main render
+  // ──────────────────────────────────────────────────────────────
+  return (
+    <div className="w-full h-full bg-[#fbf9f8] text-gray-900 overflow-y-auto no-scrollbar pb-32 flex flex-col justify-between">
+      <div>
+        {/* Header */}
+        <header className="sticky top-0 z-10 bg-[#fbf9f8] flex justify-between items-center w-full px-4 py-4 border-b border-gray-100">
+          <button
+            onClick={onBack}
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors active:scale-95 cursor-pointer"
+          >
+            <LucideIcon name="ArrowLeft" size={20} />
+          </button>
+
+          <h1 className="text-base font-extrabold tracking-tight text-center">Usuários</h1>
+
+          <div className="w-10" />
+        </header>
+
+        <main className="p-4 flex-grow">
+          {/* Título */}
+          <div className="mb-4">
+            <h1 className="text-xl font-black text-gray-900 tracking-tight leading-none mb-1">
+              Todos os Usuários
+            </h1>
+            <p className="text-xs text-gray-400">
+              🛡️ Admin — {tourists.length + entrepreneurs.length} usuários no sistema
+            </p>
+          </div>
+
+          {/* Erro */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+              <p className="text-xs text-red-700 font-semibold">⚠️ {error}</p>
+            </div>
+          )}
+
+          {/* Busca */}
+          <div className="mb-4">
+            <div className="relative">
+              <LucideIcon
+                name="Search"
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <input
+                type="text"
+                placeholder="Buscar por nome, email ou cidade..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-xs font-medium outline-none focus:ring-2 focus:ring-[#80d6d1] focus:border-transparent transition-all"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                >
+                  <LucideIcon name="X" size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Filtros */}
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar mb-6 py-1">
+            {(['Todos', 'Turistas', 'Empreendedores'] as const).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setSelectedFilter(filter)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all ${
+                  selectedFilter === filter
+                    ? 'bg-[#00201f] text-white shadow-sm'
+                    : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+
+          {/* Estatísticas */}
+          <div className="grid grid-cols-3 gap-2 mb-6">
+            <div className="bg-white rounded-lg p-3 border border-gray-100 text-center">
+              <p className="text-[10px] text-gray-400 font-bold uppercase">Turistas</p>
+              <p className="text-xl font-black text-[#006a66]">{tourists.length}</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-gray-100 text-center">
+              <p className="text-[10px] text-gray-400 font-bold uppercase">Empreend.</p>
+              <p className="text-xl font-black text-purple-600">{entrepreneurs.length}</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-gray-100 text-center">
+              <p className="text-[10px] text-gray-400 font-bold uppercase">Total</p>
+              <p className="text-xl font-black text-blue-600">
+                {tourists.length + entrepreneurs.length}
+              </p>
+            </div>
+          </div>
+
+          {/* Lista */}
+          <div className="space-y-4">
+            {filteredContent.length === 0 ? (
+              <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-200 p-6 flex flex-col items-center">
+                <LucideIcon
+                  name={searchTerm ? 'Search' : 'Users'}
+                  size={36}
+                  className="text-gray-300 mb-2"
+                />
+                <p className="text-xs font-bold text-gray-500">
+                  {searchTerm
+                    ? `Nenhum usuário encontrado para "${searchTerm}"`
+                    : 'Nenhum usuário cadastrado'}
+                </p>
+              </div>
+            ) : (
+              filteredContent.map((user) => <UserCard key={user.id} user={user} />)
+            )}
+          </div>
+        </main>
+      </div>
+
+      {/* iOS home indicator */}
+      <footer>
+        <div className="pb-4 select-none pointer-events-none">
+          <div className="w-32 h-1 bg-black rounded-full mx-auto opacity-15" />
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+
