@@ -24,7 +24,7 @@ public class AdminController {
     }
 
     @GetMapping("/all-events")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TURISTA')")
     public ResponseEntity<List<PostEventResponseDTO>> getAllEvents() {
         System.out.println("[CONTROLLER] GET /postEvent/all-events");
 
@@ -33,6 +33,7 @@ public class AdminController {
         return ResponseEntity.ok(events);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'TURISTA')")
     @GetMapping("/all-services")
     public ResponseEntity<List<PostServiceResponseDTO>> getAllServices() {
         List<PostServiceResponseDTO> services = this.adminService.findAll();

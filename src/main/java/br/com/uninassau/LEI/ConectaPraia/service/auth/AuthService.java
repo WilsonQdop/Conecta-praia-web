@@ -1,7 +1,7 @@
 package br.com.uninassau.LEI.ConectaPraia.service.auth;
 
-import br.com.uninassau.LEI.ConectaPraia.exceptions.EmailAlreadyInUseException;
 import br.com.uninassau.LEI.ConectaPraia.domain.Entrepreneur;
+import br.com.uninassau.LEI.ConectaPraia.exceptions.EmailAlreadyInUseException;
 import br.com.uninassau.LEI.ConectaPraia.domain.Tourist;
 import br.com.uninassau.LEI.ConectaPraia.domain.User;
 import br.com.uninassau.LEI.ConectaPraia.dto.LoginResponseDTO;

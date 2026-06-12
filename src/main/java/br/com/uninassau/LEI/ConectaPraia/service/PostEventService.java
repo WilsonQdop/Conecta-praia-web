@@ -5,6 +5,7 @@ import br.com.uninassau.LEI.ConectaPraia.domain.PostsEvent;
 import br.com.uninassau.LEI.ConectaPraia.dto.CreatePostEventResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.dto.PostEventResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.dto.request.CreatePostEventRequestDTO;
+import br.com.uninassau.LEI.ConectaPraia.dto.request.UpdateProfileRequestDTO;
 import br.com.uninassau.LEI.ConectaPraia.repositories.PostEventRepository;
 import br.com.uninassau.LEI.ConectaPraia.utils.AuthUtil;
 import br.com.uninassau.LEI.ConectaPraia.utils.ConvertDTO;
@@ -62,5 +63,7 @@ public class PostEventService {
                 .map(this.convertDTO::convertToEventResponseDTO)
                 .collect(Collectors.toList());
     }
+
+
 
 }

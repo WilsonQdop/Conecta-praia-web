@@ -8,7 +8,7 @@ import { LucideIcon } from './LucideIcon';
 import { AppState, UserRole, LocalActivity, Appointment, Review } from '../types';
 import { WelcomeScreen, LoginScreen, RegisterScreen, RoleSelectScreen } from './OnboardingScreens';
 
-import { TouristSearchScreen, InteractiveMapScreen, EventDetailScreen, ServiceDetailScreen, RatingModal, AppointmentsScreen, EventsAndServicesScreen } from './TouristScreens';
+import { TouristSearchScreen, InteractiveMapScreen, EventDetailScreen, ServiceDetailScreen, RatingModal, AppointmentsScreen, EventsAndServicesScreen, TouristProfileScreen } from './TouristScreens';
 import { EntrepreneurProfileScreen, ReviewsManagementScreen, EntrepreneurServicesScreen } from './EntrepreneurScreens';
 import { AdminAllActivitiesScreen, AdminProfileScreen } from './AdminScreens';
 import { CreateActivityScreen } from './CreateActivityScreen';
@@ -41,6 +41,7 @@ export const PhoneSimulator: React.FC = () => {
     const userEmail = localStorage.getItem('userEmail');
     const userRole = localStorage.getItem('userRole');
     const userName = localStorage.getItem('userName');
+    const [currentScreen, setCurrentScreen] = useState<string>('entrepreneur_profile');
     
 
     console.log('[SESSION] Verificando sessão anterior...');
@@ -317,6 +318,16 @@ const handleLogin = async (email: string, role: UserRole, name: string) => {
             onBack={() => changeScreen('welcome')}
             onRegister={() => changeScreen('register')}
             onLogin={handleLogin}
+          />
+        );
+
+        case 'profile_hub':
+        return (
+          <TouristProfileScreen 
+            onBack={() => changeScreen('map')} 
+            onLogout={handleLogout}
+            onNavigate={changeScreen}
+            touristName={state.currentUserName || state.currentUserEmail.split('@')[0]} 
           />
         );
       

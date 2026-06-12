@@ -31,10 +31,7 @@ public class PostEventController {
     @GetMapping("/my-events")
     @PreAuthorize("hasRole('EMPREENDEDOR')")
     public ResponseEntity<List<PostEventResponseDTO>> getMyEvents() {
-        System.out.println("[CONTROLLER] GET /postEvent/my-events");
-
         List<PostEventResponseDTO> events = this.postEventService.findAllEventsByEntrepreneur();
-
         return ResponseEntity.ok(events);
     }
 

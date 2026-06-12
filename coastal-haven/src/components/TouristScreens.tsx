@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LucideIcon } from './LucideIcon';
 import { LocalActivity, Appointment, Review } from '../types';
 import { ACTIVITIES, IMAGES } from '../data';
+import { registeredService } from '../services/api';
+import { adminService } from '../services/api';
 
-// --- SHARED REUSABLE BOTTOM TAB NAV BAR ---
+// =================================================================
+// 🧭 COMPONENTE: BOTTOM TAB NAV BAR (COMPARTILHADO)
+// =================================================================
 interface BottomTabNavProps {
   activeScreen: string;
   onNavigate: (screen: string) => void;
@@ -66,8 +70,9 @@ export const BottomTabNav: React.FC<BottomTabNavProps> = ({ activeScreen, onNavi
   );
 };
 
-
-// --- SCREEN 5: TOURIST SEARCH SCREEN (BUSCA - MAPA) ---
+// =================================================================
+// 🔍 TELA: TOURIST SEARCH SCREEN (BUSCA - MAPA)
+// =================================================================
 interface SearchMapProps {
   onNavigate: (screen: string) => void;
   onSelectActivity: (id: string, type: 'evento' | 'servico') => void;
@@ -87,16 +92,13 @@ export const TouristSearchScreen: React.FC<SearchMapProps> = ({ onNavigate, onSe
 
   return (
     <div className="relative w-full h-full text-gray-900 bg-[#fbf9f8] overflow-hidden">
-      {/* Map simulation background */}
       <div 
         className="absolute inset-0 z-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${IMAGES.searchMap})` }}
       />
 
-      {/* Floating Header */}
       <header className="absolute top-4 left-0 w-full z-10 px-4">
         <div className="flex items-center gap-2 pt-2">
-          {/* Search bar */}
           <div className="flex-grow bg-white/95 backdrop-blur-sm rounded-full shadow-lg flex items-center px-4 py-2.5 border border-gray-100">
             <LucideIcon name="Search" className="text-gray-400 mr-2" size={18} />
             <input 
@@ -112,10 +114,8 @@ export const TouristSearchScreen: React.FC<SearchMapProps> = ({ onNavigate, onSe
               </button>
             )}
           </div>
-          {/* Filter button */}
           <button 
             onClick={() => {
-              // Quick toggling of categories
               if (filterType === 'tudo') setFilterType('eventos');
               else if (filterType === 'eventos') setFilterType('servicos');
               else setFilterType('tudo');
@@ -126,7 +126,6 @@ export const TouristSearchScreen: React.FC<SearchMapProps> = ({ onNavigate, onSe
           </button>
         </div>
 
-        {/* Quick indicators */}
         <div className="flex gap-1.5 mt-3">
           <span className="text-[10px] bg-white/90 backdrop-blur-sm text-gray-800 font-extrabold px-3 py-1 rounded-full shadow-sm">
             Filtro: {filterType.toUpperCase()}
@@ -139,26 +138,15 @@ export const TouristSearchScreen: React.FC<SearchMapProps> = ({ onNavigate, onSe
         </div>
       </header>
 
-      {/* Map pins overlays */}
       <div className="absolute inset-0 z-5 pointer-events-none">
-        {filteredPins.map((a, i) => {
-          // Set positions matching image pins
+        {filteredPins.map((a) => {
           let top = '30%';
           let left = '50%';
-          if (a.id === 'act-1') { top = '25%'; left = '20%'; } // Surf
-          if (a.id === 'act-2') { top = '50%'; left = '45%'; } // Music
-          if (a.id === 'act-4') { top = '70%'; left = '60%'; } // Peixada
-          if (a.id === 'act-5') { top = '40%'; left = '75%'; } // Moqueca
-          if (a.id === 'act-6') { top = '15%'; left = '65%'; } // Caipiroska
-
-          // Fallback placements for new user-registered custom slots
-          if (!['act-1', 'act-2', 'act-4', 'act-5', 'act-6'].includes(a.id)) {
-            const tops = ['35%', '58%', '52%', '18%'];
-            const lefts = ['24%', '82%', '14%', '86%'];
-            const idx = a.title.charCodeAt(0) % tops.length;
-            top = tops[idx];
-            left = lefts[idx];
-          }
+          if (a.id === 'act-1') { top = '25%'; left = '20%'; }
+          if (a.id === 'act-2') { top = '50%'; left = '45%'; }
+          if (a.id === 'act-4') { top = '70%'; left = '60%'; }
+          if (a.id === 'act-5') { top = '40%'; left = '75%'; }
+          if (a.id === 'act-6') { top = '15%'; left = '65%'; }
 
           return (
             <div 
@@ -183,8 +171,9 @@ export const TouristSearchScreen: React.FC<SearchMapProps> = ({ onNavigate, onSe
   );
 };
 
-
-// --- SCREEN 6: INTERACTIVE MAP OVERVIEW (MAPA INTERATIVO PRINCIPAL) ---
+// =================================================================
+// 🗺️ TELA: INTERACTIVE MAP OVERVIEW (MAPA INTERATIVO PRINCIPAL)
+// =================================================================
 interface InteractiveMapProps {
   onNavigate: (screen: string) => void;
   onSelectActivity: (id: string, type: 'evento' | 'servico') => void;
@@ -194,13 +183,11 @@ interface InteractiveMapProps {
 export const InteractiveMapScreen: React.FC<InteractiveMapProps> = ({ onNavigate, onSelectActivity, activities }) => {
   return (
     <div className="relative w-full h-full text-gray-900 bg-[#fbf9f8] overflow-hidden">
-      {/* Map simulation background */}
       <div 
         className="absolute inset-0 z-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${IMAGES.interactiveMap})` }}
       />
 
-      {/* Header bar */}
       <header className="fixed top-0 left-0 w-full z-10 flex justify-between items-center px-4 py-3 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="flex items-center gap-2">
           <button 
@@ -225,72 +212,27 @@ export const InteractiveMapScreen: React.FC<InteractiveMapProps> = ({ onNavigate
         </div>
       </header>
 
-      {/* Pins Overlay */}
       <div className="absolute inset-0 z-5 pointer-events-none">
-        {/* Enotel Pin */}
-        <div 
-          onClick={() => onSelectActivity('act-2', 'evento')}
-          className="absolute top-[20%] left-[55%] pointer-events-auto cursor-pointer flex flex-col items-center"
-        >
+        <div onClick={() => onSelectActivity('act-2', 'evento')} className="absolute top-[20%] left-[55%] pointer-events-auto cursor-pointer flex flex-col items-center">
           <div className="bg-white/95 px-2 py-1 rounded shadow-md mb-1 border border-pink-100">
             <span className="text-[9px] font-extrabold text-pink-500">Enotel Festival</span>
           </div>
           <div className="w-4 h-4 bg-pink-500 rounded-full border-2 border-white marker-pulse shadow-lg" />
         </div>
 
-        {/* Ruda Pin */}
-        <div 
-          onClick={() => onSelectActivity('act-4', 'servico')}
-          className="absolute top-[45%] left-[30%] pointer-events-auto cursor-pointer flex flex-col items-center"
-        >
+        <div onClick={() => onSelectActivity('act-4', 'servico')} className="absolute top-[45%] left-[30%] pointer-events-auto cursor-pointer flex flex-col items-center">
           <div className="bg-white/95 px-2 py-1 rounded shadow-md mb-1 border border-pink-100">
             <span className="text-[9px] font-extrabold text-pink-500">Ruda Peixada</span>
           </div>
           <div className="w-4 h-4 bg-pink-500 rounded-full border-2 border-white marker-pulse shadow-lg" />
         </div>
 
-        {/* Central Pin */}
-        <div 
-          onClick={() => onSelectActivity('act-1', 'evento')}
-          className="absolute top-[68%] left-[45%] pointer-events-auto cursor-pointer flex flex-col items-center"
-        >
+        <div onClick={() => onSelectActivity('act-1', 'evento')} className="absolute top-[68%] left-[45%] pointer-events-auto cursor-pointer flex flex-col items-center">
           <div className="bg-white/95 px-2 py-1 rounded shadow-md mb-1 border border-pink-100">
             <span className="text-[9px] font-extrabold text-pink-500">Surf estilo de vida</span>
           </div>
-          <div className="w-4 h-4 bg-[#006a66] rounded-full border-2 border-white marker-pulse shadow-lg" />
-        </div>
-
-        {/* Praia pin */}
-        <div 
-          onClick={() => onSelectActivity('act-5', 'servico')}
-          className="absolute top-[75%] left-[70%] pointer-events-auto cursor-pointer flex flex-col items-center"
-        >
-          <div className="bg-white/95 px-2 py-1 rounded shadow-md mb-1 border border-pink-100">
-            <span className="text-[9px] font-extrabold text-pink-500">Praia de Porto</span>
-          </div>
           <div className="w-4 h-4 bg-pink-500 rounded-full border-2 border-white marker-pulse shadow-lg" />
         </div>
-
-        {/* Dynamic customized pins */}
-        {(activities || []).filter(a => a.isCustom || !['act-1', 'act-2', 'act-4', 'act-5'].includes(a.id)).map((act, idx) => {
-          const tops = ['35%', '58%', '52%', '18%'];
-          const lefts = ['22%', '80%', '16%', '84%'];
-          const top = tops[idx % tops.length];
-          const left = lefts[idx % lefts.length];
-          return (
-            <div 
-              key={act.id}
-              style={{ top, left }}
-              className="absolute pointer-events-auto cursor-pointer flex flex-col items-center transform -translate-x-1/2 -translate-y-1/2 animate-bounce animate-pulse"
-              onClick={() => onSelectActivity(act.id, act.type)}
-            >
-              <div className="bg-[#006a66] text-white px-2 py-1 rounded shadow-md mb-1 border border-white">
-                <span className="text-[9px] font-extrabold whitespace-nowrap">★ {act.title}</span>
-              </div>
-              <div className="w-4 h-4 bg-[#006a66] rounded-full border-2 border-white marker-pulse shadow-lg" />
-            </div>
-          );
-        })}
       </div>
 
       <BottomTabNav activeScreen="map" onNavigate={onNavigate} />
@@ -298,8 +240,187 @@ export const InteractiveMapScreen: React.FC<InteractiveMapProps> = ({ onNavigate
   );
 };
 
+// =================================================================
+// 🎫 TELA: EVENTS AND SERVICES HUB (MURAL DE EVENTOS E SERVIÇOS)
+// =================================================================
+interface EventsAndServicesProps {
+  onNavigate: (screen: string) => void;
+  onSelectActivity: (id: string, type: 'evento' | 'servico') => void;
+  activities?: LocalActivity[];
+}
 
-// --- SCREEN 7: EVENT DETAILS (AULA DE SURF) ---
+
+
+interface EventsAndServicesProps {
+  onNavigate: (screen: string) => void;
+  onSelectActivity: (id: string, type: 'evento' | 'servico') => void;
+}
+
+export const EventsAndServicesScreen: React.FC<EventsAndServicesProps> = ({ onNavigate, onSelectActivity }) => {
+  const [filter, setFilter] = useState<'tudo' | 'evento' | 'servico'>('tudo');
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // ════════════════════════════════════════════════════════════════
+  // 📥 CARREGAR ATIVIDADES DO BANCO DE DADOS (AGORA VIA ADMIN SERVICE)
+  // ════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    const fetchRealData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        console.log('[TOURIST_MURAL] Buscando dados reais da API...');
+
+        // Executa as duas requisições em paralelo no backend liberado
+        const [servicesData, eventsData] = await Promise.all([
+          adminService.getAllServices(),
+          adminService.getAllEvents()
+        ]);
+
+        // Normaliza os SERVIÇOS do backend para o formato que o card do Turista espera
+        const normalizedServices = servicesData.map((s: any) => ({
+          id: s.id,
+          type: 'servico',
+          title: s.title,
+          organizer: s.entrepreneurName,
+          price: s.valueDescription || `R$ ${s.value || '0,00'}`,
+          details: s.description,
+          date: new Date(s.createdAt).toLocaleDateString('pt-BR'),
+          location: s.location
+        }));
+
+        // Normaliza os EVENTOS do backend para o formato que o card do Turista espera
+        const normalizedEvents = eventsData.map((e: any) => ({
+          id: e.id,
+          type: 'evento',
+          title: e.title,
+          organizer: e.entrepreneurName,
+          price: e.valueDescription || `R$ ${e.value || '0,00'}`,
+          details: e.description,
+          date: new Date(e.dateHour || e.createdAt).toLocaleDateString('pt-BR'),
+          location: e.location
+        }));
+
+        // Junta tudo no estado local
+        setItems([...normalizedServices, ...normalizedEvents]);
+      } catch (err: any) {
+        console.error('[TOURIST_MURAL] ❌ Erro ao buscar atividades:', err);
+        setError(err.response?.data?.message || 'Erro ao carregar o mural local de atividades.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRealData();
+  }, []);
+
+  // ════════════════════════════════════════════════════════════════
+  // 🔄 FILTRAGEM DINÂMICA
+  // ════════════════════════════════════════════════════════════════
+  const filteredItems = useMemo(() => {
+    if (filter === 'tudo') return items;
+    return items.filter(item => item.type === filter);
+  }, [filter, items]);
+
+  // ════════════════════════════════════════════════════════════════
+  // 🎨 RENDERING
+  // ════════════════════════════════════════════════════════════════
+  return (
+    <div className="w-full h-full text-gray-900 bg-[#fbf9f8] overflow-y-auto no-scrollbar pb-32">
+      
+      {/* Header fixo */}
+      <header className="sticky top-0 bg-[#fbf9f8]/90 backdrop-blur-md z-10 px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+        <div>
+          <span className="text-[10px] font-black tracking-widest text-[#006a66] uppercase">Mural Local</span>
+          <h1 className="text-xl font-black text-gray-900">Atividades e Serviços</h1>
+        </div>
+        <div className="bg-[#80d6d1]/20 p-2 rounded-full text-[#006a66]">
+          <LucideIcon name="Ticket" size={20} />
+        </div>
+      </header>
+
+      {/* Botões de Filtro */}
+      <div className="px-6 my-4 flex gap-2 overflow-x-auto no-scrollbar">
+        {([
+          { id: 'tudo', label: 'Tudo' },
+          { id: 'evento', label: 'Eventos' },
+          { id: 'servico', label: 'Serviços' }
+        ] as const).map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setFilter(tab.id)}
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+              filter === tab.id ? 'bg-[#006a66] text-white shadow-sm' : 'bg-white border border-gray-100 text-gray-500'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Exibição de Estados (Loading, Erro ou Lista Vazia) */}
+      <div className="px-6 space-y-4">
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#006a66] mx-auto mb-3"></div>
+            <p className="text-xs text-gray-500 font-medium">Buscando novidades em Porto de Galinhas...</p>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center">
+            <p className="text-xs text-red-700 font-bold">⚠️ {error}</p>
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 p-6">
+            <LucideIcon name="Inbox" size={32} className="text-gray-300 mx-auto mb-2" />
+            <p className="text-xs font-bold text-gray-400">Nenhuma atividade disponível no momento.</p>
+          </div>
+        ) : (
+          // Renderização da lista dinâmica vinda diretamente do banco
+          filteredItems.map(item => (
+            <div
+              key={item.id}
+              onClick={() => onSelectActivity(item.id, item.type)}
+              className="bg-white rounded-2xl p-4 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.01)] cursor-pointer hover:border-gray-200 transition-all flex flex-col justify-between active:scale-[0.99]"
+            >
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase ${
+                    item.type === 'evento' ? 'bg-purple-50 text-purple-600' : 'bg-teal-50 text-[#006a66]'
+                  }`}>
+                    {item.type === 'evento' ? 'EVENTO' : 'SERVIÇO'}
+                  </span>
+                  <h4 className="text-sm font-black text-gray-900 pt-1">{item.title}</h4>
+                  <p className="text-[11px] text-gray-400 font-medium">por {item.organizer}</p>
+                </div>
+                <span className="text-xs font-black text-[#006a66]">{item.price}</span>
+              </div>
+
+              <p className="text-xs text-gray-500 line-clamp-2 mt-2 leading-relaxed">{item.details}</p>
+
+              <div className="flex gap-4 mt-3 pt-3 border-t border-gray-50 text-[11px] text-gray-500 font-semibold">
+                <div className="flex items-center gap-1">
+                  <LucideIcon name="Calendar" size={12} />
+                  <span>{item.date}</span>
+                </div>
+                <div className="flex items-center gap-1 truncate">
+                  <LucideIcon name="MapPin" size={12} />
+                  <span className="truncate">{item.location}</span>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <BottomTabNav activeScreen="events_services" onNavigate={onNavigate} />
+    </div>
+  );
+};
+
+// =================================================================
+// 🏄‍♂️ TELA: EVENT DETAILS (DETALHES DO EVENTO)
+// =================================================================
 interface EventDetailProps {
   activityId: string;
   onBack: () => void;
@@ -312,137 +433,48 @@ interface EventDetailProps {
 }
 
 export const EventDetailScreen: React.FC<EventDetailProps> = ({
-  activityId,
-  onBack,
-  onNavigate,
-  onEvaluate,
-  onRegisterAppointment,
-  isFavorited,
-  onToggleFavorite,
-  activities
+  activityId, onBack, onNavigate, onEvaluate, onRegisterAppointment, isFavorited, onToggleFavorite, activities
 }) => {
   const actList = activities || ACTIVITIES;
   const activity = actList.find(a => a.id === activityId) || actList[0];
 
-  const handleRegister = () => {
-    onRegisterAppointment(activity);
-    alert(`Inscrição confirmada para "${activity.title}"! Acesse a aba "Reservas" para conferir.`);
-  };
-
   return (
     <div className="relative w-full h-full text-gray-900 bg-[#fbf9f8] overflow-y-auto no-scrollbar pb-32">
-      {/* Dynamic Header actions */}
       <header className="fixed top-15 left-0 right-0 z-50 px-4 py-2 flex justify-between items-center bg-transparent">
-        <button 
-          onClick={onBack}
-          className="bg-white/95 p-2 rounded-full shadow-md text-gray-800 hover:bg-gray-100 transition-colors active:scale-95 cursor-pointer"
-        >
+        <button onClick={onBack} className="bg-white/95 p-2 rounded-full shadow-md text-gray-800 cursor-pointer">
           <LucideIcon name="ArrowLeft" size={20} />
         </button>
-
         <div className="flex gap-2">
-          <button 
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({ title: activity.title, text: activity.details, url: window.location.href });
-              } else {
-                alert(`Compartilhando: ${activity.title} em Porto de Galinhas!`);
-              }
-            }}
-            className="bg-white/95 p-2 rounded-full shadow-md text-gray-800 hover:bg-gray-100 transition-colors cursor-pointer"
-          >
-            <LucideIcon name="Share2" size={18} />
-          </button>
-          
-          <button 
-            onClick={() => onToggleFavorite(activity.id)}
-            className="bg-white/95 p-2 rounded-full shadow-md text-gray-800 hover:bg-gray-100 transition-colors cursor-pointer"
-          >
-            <LucideIcon 
-              name="Heart" 
-              size={18} 
-              className={isFavorited ? "text-red-500 fill-current" : "text-gray-700"} 
-            />
+          <button onClick={() => onToggleFavorite(activity.id)} className="bg-white/95 p-2 rounded-full shadow-md cursor-pointer">
+            <LucideIcon name="Heart" size={18} className={isFavorited ? "text-red-500 fill-current" : "text-gray-700"} />
           </button>
         </div>
       </header>
 
-      {/* Map location background area */}
-      <section className="h-[280px] w-full relative z-0">
-        <img 
-          src={IMAGES.surfMapDetail} 
-          alt="Mapa do Surf" 
-          className="w-full h-full object-cover filter brightness-95" 
-        />
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-[#006a66] text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
-            <LucideIcon name="MapPin" size={12} fill="white" />
-            <span>{activity.location}</span>
-          </div>
-        </div>
+      <section className="h-[280px] w-full relative">
+        <img src={IMAGES.surfMapDetail} alt="Mapa" className="w-full h-full object-cover" />
       </section>
 
-      {/* Main card details with drag handle style */}
       <section className="relative z-10 -mt-10 px-4">
         <div className="bg-[#f0eded]/95 rounded-t-[32px] shadow-2xl p-6 flex flex-col items-center">
-          <div className="w-12 h-1 bg-gray-400 rounded-full mb-6 opacity-40" />
-
-          <h1 className="text-2xl font-black text-gray-900 text-center mb-6 leading-tight">
-            {activity.title}
-          </h1>
-
-          {/* Details Bento Grid */}
-          <div className="w-full bg-[#e4e2e1] rounded-2xl p-5 space-y-4 shadow-sm mb-6">
-            <div className="flex flex-col items-center text-center">
-              <span className="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider mb-0.5">LOCAL</span>
-              <p className="text-sm font-bold text-gray-900">{activity.organizer}</p>
-            </div>
-            
-            <div className="flex flex-col items-center text-center">
-              <span className="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider mb-0.5">DATA</span>
-              <p className="text-sm font-bold text-gray-900">{activity.date}</p>
-            </div>
-
-            <div className="flex flex-col items-center text-center">
-              <span className="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider mb-0.5">VALOR</span>
-              <p className="text-base font-extrabold text-[#006a66]">{activity.price}</p>
-            </div>
-
-            <div className="pt-3 border-t border-gray-300">
-              <span className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-wider text-center mb-2">DESCRIÇÃO</span>
-              <p className="text-xs text-gray-700 text-center leading-relaxed">
-                {activity.details}
-              </p>
-            </div>
+          <h1 className="text-2xl font-black text-gray-900 text-center mb-6">{activity.title}</h1>
+          <div className="w-full bg-[#e4e2e1] rounded-2xl p-5 space-y-4 mb-6">
+            <p className="text-xs text-gray-700 text-center">{activity.details}</p>
           </div>
-
-          {/* Core Action buttons inside detail */}
-          <div className="grid grid-cols-2 gap-3 w-full max-w-sm mb-6">
-            <button 
-              onClick={onEvaluate}
-              className="flex items-center justify-center gap-1 bg-[#80d6d1] text-gray-900 font-bold py-3 px-4 rounded-full shadow-sm hover:brightness-105 transition-all cursor-pointer text-sm"
-            >
-              <LucideIcon name="Star" size={16} />
-              <span>Avaliar</span>
-            </button>
-            <button 
-              onClick={handleRegister}
-              className="flex items-center justify-center gap-1 bg-[#006a66] text-white font-bold py-3 px-4 rounded-full shadow-md hover:brightness-110 transition-all cursor-pointer text-sm"
-            >
-              <LucideIcon name="CheckCircle" size={16} />
-              <span>Inscrever</span>
-            </button>
+          <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+            <button onClick={onEvaluate} className="bg-[#80d6d1] font-bold py-3 px-4 rounded-full text-sm cursor-pointer">Avaliar</button>
+            <button onClick={() => { onRegisterAppointment(activity); alert('Inscrição efetuada!'); }} className="bg-[#006a66] text-white font-bold py-3 px-4 rounded-full text-sm cursor-pointer">Inscrever</button>
           </div>
         </div>
       </section>
-
       <BottomTabNav activeScreen="map" onNavigate={onNavigate} />
     </div>
   );
 };
 
-
-// --- SCREEN 8: SERVICE DETAILS (PEIXADA DO NÊ) ---
+// =================================================================
+// 🦐 TELA: SERVICE DETAILS (DETALHES DO SERVIÇO)
+// =================================================================
 interface ServiceDetailProps {
   activityId: string;
   onBack: () => void;
@@ -455,129 +487,47 @@ interface ServiceDetailProps {
 }
 
 export const ServiceDetailScreen: React.FC<ServiceDetailProps> = ({
-  activityId,
-  onBack,
-  onNavigate,
-  onEvaluate,
-  onAddReminder,
-  isFavorited,
-  onToggleFavorite,
-  activities
+  activityId, onBack, onNavigate, onEvaluate, onAddReminder, isFavorited, onToggleFavorite, activities
 }) => {
   const actList = activities || ACTIVITIES;
   const activity = actList.find(a => a.id === activityId) || actList[3];
 
-  const handleReminder = () => {
-    onAddReminder(activity);
-    alert(`Lembrete de compromisso agendado para "${activity.title}"! Veja no painel de Reservas.`);
-  };
-
   return (
     <div className="relative w-full h-full text-gray-900 bg-[#fbf9f8] overflow-y-auto no-scrollbar pb-32">
-      {/* Header bar */}
       <header className="fixed top-2 left-0 right-0 z-50 px-4 py-2 flex justify-between items-center bg-transparent">
-        <button 
-          onClick={onBack}
-          className="bg-white/95 p-2 rounded-full shadow-md text-gray-800 hover:bg-gray-100 transition-colors active:scale-95 cursor-pointer"
-        >
+        <button onClick={onBack} className="bg-white/95 p-2 rounded-full shadow-md text-gray-800 cursor-pointer">
           <LucideIcon name="ArrowLeft" size={20} />
         </button>
-
-        <div className="flex gap-2">
-          <button 
-            onClick={() => alert(`Link de compartilhamento para "${activity.title}" copiado!`)}
-            className="bg-white/95 p-2 rounded-full shadow-md text-gray-800 hover:bg-gray-100 cursor-pointer"
-          >
-            <LucideIcon name="Share2" size={18} />
-          </button>
-          
-          <button 
-            onClick={() => onToggleFavorite(activity.id)}
-            className="bg-white/95 p-2 rounded-full shadow-md text-gray-800 hover:bg-gray-100 cursor-pointer"
-          >
-            <LucideIcon 
-              name="Heart" 
-              size={18} 
-              className={isFavorited ? "text-red-500 fill-current" : "text-gray-700"} 
-            />
-          </button>
-        </div>
       </header>
 
-      {/* Map location background area */}
-      <section className="h-[280px] w-full relative z-0">
-        <img 
-          src={IMAGES.peixadaMapDetail} 
-          alt="Mapa do Nê" 
-          className="w-full h-full object-cover filter brightness-95" 
-        />
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-[#00201e] text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center gap-1 opacity-90">
-            <LucideIcon name="MapPin" size={13} className="text-[#80d6d1]" />
-            <span>{activity.location}</span>
-          </div>
-        </div>
+      <section className="h-[280px] w-full relative">
+        <img src={IMAGES.peixadaMapDetail} alt="Mapa" className="w-full h-full object-cover" />
       </section>
 
-      {/* Content details sheet */}
       <section className="relative z-10 -mt-10 px-4">
         <div className="bg-[#f8f5f0] rounded-t-[40px] shadow-2xl p-6 flex flex-col items-center">
-          <div className="w-12 h-1 bg-gray-300 rounded-full mb-6 opacity-55" />
-
-          <h1 className="text-2xl font-black text-gray-900 text-center mb-4 leading-tight">
-            {activity.title}
-          </h1>
-
-          <div className="w-full bg-[#e6e2da]/60 rounded-3xl p-5 space-y-4 mb-6 shadow-sm">
-            <div className="text-center">
-              <span className="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider block mb-0.5">LOCAL</span>
-              <p className="text-sm font-bold text-gray-900">{activity.organizer}</p>
-            </div>
-            
-            <div className="text-center">
-              <span className="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider block mb-0.5">DATA DO COMPROMISSO</span>
-              <p className="text-sm font-bold text-gray-900">{activity.date}</p>
-            </div>
-
-            <div className="text-center pt-2">
-              <span className="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider block mb-1">PROMOÇÃO / DESCRIÇÃO</span>
-              <p className="text-xs text-gray-600 max-w-sm mx-auto leading-relaxed">
-                {activity.details}
-              </p>
-            </div>
+          <h1 className="text-2xl font-black text-gray-900 text-center mb-4">{activity.title}</h1>
+          <div className="w-full bg-[#e6e2da]/60 rounded-3xl p-5 mb-6">
+            <p className="text-xs text-gray-600 text-center">{activity.details}</p>
           </div>
-
-          <div className="grid grid-cols-2 gap-3 w-full max-w-sm mb-6">
-            <button 
-              onClick={handleReminder}
-              className="flex items-center justify-center gap-1.5 bg-[#80d6d1] text-gray-950 font-bold py-3.5 px-4 rounded-xl shadow-sm hover:brightness-105 active:scale-95 transition-all cursor-pointer text-xs uppercase"
-            >
-              <LucideIcon name="Bell" size={15} />
-              <span>Lembrar-me</span>
-            </button>
-            
-            <button 
-              onClick={onEvaluate}
-              className="flex items-center justify-center gap-1.5 bg-[#006a66] text-white font-bold py-3.5 px-4 rounded-xl shadow-sm hover:brightness-110 active:scale-95 transition-all cursor-pointer text-xs uppercase"
-            >
-              <LucideIcon name="Star" size={15} />
-              <span>Avaliar</span>
-            </button>
+          <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+            <button onClick={() => { onAddReminder(activity); alert('Lembrete salvo!'); }} className="bg-[#80d6d1] font-bold py-3.5 px-4 rounded-xl text-xs uppercase cursor-pointer">Lembrar-me</button>
+            <button onClick={onEvaluate} className="bg-[#006a66] text-white font-bold py-3.5 px-4 rounded-xl text-xs uppercase cursor-pointer">Avaliar</button>
           </div>
         </div>
       </section>
-
       <BottomTabNav activeScreen="map" onNavigate={onNavigate} />
     </div>
   );
 };
 
-
-// --- SCREEN 9: DECORATIVE RATING MODAL OVERLAY ---
+// =================================================================
+// ⭐ MODAL: DECORATIVE RATING MODAL OVERLAY
+// =================================================================
 interface RatingModalProps {
   type: 'evento' | 'servico';
   onClose: () => void;
-  onSubmit: (starsEventService: number, commentEventService: string, starsExtra: number, commentExtra: string) => void;
+  onSubmit: (starsMain: number, commentMain: string, starsSec: number, commentSec: string) => void;
 }
 
 export const RatingModal: React.FC<RatingModalProps> = ({ type, onClose, onSubmit }) => {
@@ -586,127 +536,32 @@ export const RatingModal: React.FC<RatingModalProps> = ({ type, onClose, onSubmi
   const [commentMain, setCommentMain] = useState('');
   const [commentSec, setCommentSec] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (starsMain === 0) {
-      alert('Por favor, escolha uma avaliação em estrelas.');
-      return;
-    }
-    onSubmit(starsMain, commentMain, starsSec, commentSec);
-  };
-
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-      <motion.div 
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-[#white] bg-white w-full max-w-sm rounded-[28px] p-6 shadow-2xl relative overflow-y-auto max-h-[85vh] no-scrollbar text-gray-900 border border-gray-100"
-      >
-        {/* Close Button */}
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors cursor-pointer text-gray-600"
-        >
-          <LucideIcon name="X" size={16} />
-        </button>
-
-        <form onSubmit={handleSubmit} className="space-y-6 pt-2">
-          {/* Section 1 */}
-          <div className="text-center space-y-3">
-            <h2 className="text-lg font-black text-gray-900">
-              {type === 'evento' ? 'Avalie o evento' : 'Avalie o serviço'}
-            </h2>
-            
-            {/* Main Stars */}
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white w-full max-w-sm rounded-[28px] p-6 shadow-2xl relative max-h-[85vh] overflow-y-auto text-gray-900">
+        <button onClick={onClose} className="absolute top-4 right-4 p-1 bg-gray-100 rounded-full cursor-pointer"><LucideIcon name="X" size={16} /></button>
+        <div className="space-y-6 pt-2">
+          <div className="text-center space-y-2">
+            <h2 className="text-lg font-black">Avaliar atividade</h2>
             <div className="flex justify-center gap-1">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <button 
-                  type="button"
-                  key={s}
-                  onClick={() => setStarsMain(s)}
-                  className="p-1 cursor-pointer transform active:scale-125 transition-transform"
-                >
-                  <LucideIcon 
-                    name="Star" 
-                    size={32} 
-                    className={s <= starsMain ? 'text-yellow-400 fill-current' : 'text-gray-300'} 
-                  />
+              {[1, 2, 3, 4, 5].map(s => (
+                <button key={s} type="button" onClick={() => setStarsMain(s)} className="p-1 cursor-pointer">
+                  <LucideIcon name="Star" size={28} className={s <= starsMain ? 'text-yellow-400 fill-current' : 'text-gray-300'} />
                 </button>
               ))}
             </div>
-
-            {/* Comment Area */}
-            <div className="text-left">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                Fale mais sobre a sua experiência:
-              </label>
-              <textarea 
-                rows={3}
-                value={commentMain}
-                onChange={(e) => setCommentMain(e.target.value)}
-                placeholder={type === 'evento' ? "Sua opinião é muito importante..." : "Como foi seu atendimento?"}
-                className="w-full text-xs rounded-xl border border-gray-200 bg-gray-50/50 p-3 focus:ring-1 focus:ring-[#80d6d1] focus:border-[#80d6d1] transition-all resize-none outline-none text-gray-800"
-              />
-            </div>
+            <textarea rows={2} value={commentMain} onChange={e => setCommentMain(e.target.value)} placeholder="Deixe seu comentário..." className="w-full text-xs rounded-xl border p-2 outline-none" />
           </div>
-
-          <div className="h-px bg-gray-100" />
-
-          {/* Section 2 */}
-          <div className="text-center space-y-3">
-            <h2 className="text-lg font-black text-gray-900">
-              {type === 'evento' ? 'Avaliar organizadores' : 'Avalie o barraqueiro'}
-            </h2>
-            
-            {/* Secondary Stars */}
-            <div className="flex justify-center gap-1">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <button 
-                  type="button"
-                  key={s}
-                  onClick={() => setStarsSec(s)}
-                  className="p-1 cursor-pointer transform active:scale-125 transition-transform"
-                >
-                  <LucideIcon 
-                    name="Star" 
-                    size={32} 
-                    className={s <= starsSec ? 'text-[#006a66] fill-current' : 'text-gray-300'} 
-                  />
-                </button>
-              ))}
-            </div>
-
-            {/* Extra Comment Area */}
-            <div className="text-left">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                Fale mais sobre a sua experiência:
-              </label>
-              <textarea 
-                rows={3}
-                value={commentSec}
-                onChange={(e) => setCommentSec(e.target.value)}
-                placeholder={type === 'evento' ? "Como foi o atendimento dos organizadores?" : "O que achou do atendimento pessoal?"}
-                className="w-full text-xs rounded-xl border border-gray-200 bg-gray-50/50 p-3 focus:ring-1 focus:ring-[#80d6d1] focus:border-[#80d6d1] transition-all resize-none outline-none text-gray-800"
-              />
-            </div>
-          </div>
-
-          {/* Submit */}
-          <button 
-            type="submit"
-            className="w-full bg-[#80d6d1] hover:bg-[#006a66] hover:text-white text-gray-950 font-black py-4.5 rounded-full shadow-lg active:scale-95 transition-all cursor-pointer text-sm uppercase tracking-wide"
-          >
-            Enviar Avaliação
-          </button>
-        </form>
+          <button onClick={() => onSubmit(starsMain, commentMain, starsSec, commentSec)} className="w-full bg-[#80d6d1] font-black py-3 rounded-full text-xs uppercase cursor-pointer">Enviar</button>
+        </div>
       </motion.div>
     </div>
   );
 };
 
-
-// --- SCREEN 10: USER APPOINTMENTS LIST ("Confira seus agendamentos") ---
+// =================================================================
+// 📅 TELA: USER APPOINTMENTS LIST (INTEGRADA AO BACKEND)
+// =================================================================
 interface AppointmentsProps {
   onNavigate: (screen: string) => void;
   appointments: Appointment[];
@@ -714,287 +569,319 @@ interface AppointmentsProps {
   onExplore: () => void;
 }
 
-export const AppointmentsScreen: React.FC<AppointmentsProps> = ({ 
-  onNavigate, 
-  appointments, 
-  onCancelAppointment,
-  onExplore
-}) => {
-  const [selectedFilter, setSelectedFilter] = useState<'Todas' | 'Restaurantes' | 'Bares' | 'Autônomos'>('Todas');
+export const AppointmentsScreen: React.FC<AppointmentsProps> = ({ onNavigate, appointments, onCancelAppointment, onExplore }) => {
+  const [selectedFilter, setSelectedFilter] = useState<'Todas' | 'Eventos' | 'Serviços'>('Todas');
+  const [loading, setLoading] = useState(true);
+  const [registeredItems, setRegisteredItems] = useState<any[]>([]);
 
-  const filteredAppointments = appointments.filter(app => {
-    if (selectedFilter === 'Todas') return true;
-    return app.category === selectedFilter;
-  });
+  useEffect(() => {
+    const loadRegisteredItems = async () => {
+      try {
+        setLoading(true);
+        const [eventsResponse, servicesResponse] = await Promise.all([
+          registeredService.listMyRegisteredEvents(),
+          registeredService.listMyRegisteredServices()
+        ]);
+
+        const eventsData = eventsResponse.map((evt: any) => ({
+          id: evt.id, title: evt.title, type: 'Eventos', icon: 'Ticket' as const,
+          date: new Date(evt.dateHour || evt.createdAt).toLocaleDateString('pt-BR'),
+          location: evt.location, organizer: evt.entrepreneurName, price: evt.valueDescription || `R$ ${evt.value}`
+        }));
+
+        const servicesData = servicesResponse.map((srv: any) => ({
+          id: srv.id, title: srv.title, type: 'Serviços', icon: 'Briefcase' as const,
+          date: new Date(srv.dateHour || srv.createdAt).toLocaleDateString('pt-BR'),
+          location: srv.location, organizer: srv.entrepreneurName, price: srv.valueDescription || `R$ ${srv.value}`
+        }));
+
+        setRegisteredItems([...eventsData, ...servicesData]);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadRegisteredItems();
+  }, []);
+
+  const filteredItems = registeredItems.filter(item => selectedFilter === 'Todas' ? true : item.type === selectedFilter);
 
   return (
-    <div className="w-full h-full bg-[#fbf9f8] text-gray-900 overflow-y-auto no-scrollbar pb-32 flex flex-col justify-between">
-      <div>
-        <header className="sticky top-0 z-10 bg-[#fbf9f8] flex justify-between items-center w-full px-4 py-4 border-b border-gray-100">
-          <button 
-            onClick={() => onNavigate('map')}
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors active:scale-95 cursor-pointer"
-          >
-            <LucideIcon name="ArrowLeft" size={20} />
-          </button>
-          
-          <h1 className="text-base font-extrabold tracking-tight text-center">Agenda de Experiências</h1>
+    <div className="w-full h-full text-gray-900 bg-[#fbf9f8] overflow-y-auto no-scrollbar pb-32">
+      <header className="sticky top-0 bg-[#fbf9f8]/90 backdrop-blur-md z-10 px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-center">
+        <div>
+          <span className="text-[10px] font-black text-[#006a66] uppercase">Turista</span>
+          <h1 className="text-xl font-black">Minhas Inscrições</h1>
+        </div>
+      </header>
 
-          <div className="w-10 h-10 rounded-full border-2 border-[#80d6d1] overflow-hidden">
-            <img src={IMAGES.userProfile} alt="Avatar" className="w-full h-full object-cover" />
+      <div className="px-6 space-y-4 mt-4">
+        {loading ? (
+          <p className="text-xs text-center text-gray-400">Carregando dados...</p>
+        ) : filteredItems.length === 0 ? (
+          <div className="text-center p-8 bg-white rounded-2xl border">
+            <p className="text-xs text-gray-400 mb-4">Nenhuma inscrição encontrada.</p>
+            <button onClick={onExplore} className="bg-[#80d6d1] font-bold text-xs px-4 py-2 rounded-full cursor-pointer">Explorar</button>
           </div>
-        </header>
-
-        <main className="p-4 flex-grow">
-          <div className="mb-4">
-            <h1 className="text-xl font-black text-gray-900 tracking-tight leading-none mb-1">
-              Confira seus agendamentos
-            </h1>
-            <p className="text-xs text-gray-400">Suas reservas e compromissos confirmados na orla</p>
-          </div>
-
-          {/* Categories Horizontal filters */}
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar mb-6 py-1">
-            {(['Todas', 'Restaurantes', 'Bares', 'Autônomos'] as const).map((filter) => (
-              <button
-                key={filter}
-                onClick={() => setSelectedFilter(filter)}
-                className={`px-4 py-1.8 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all ${selectedFilter === filter ? 'bg-[#00201f] text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-              >
-                {filter}
-              </button>
-            ))}
-          </div>
-
-          <div className="space-y-4">
-            {filteredAppointments.length === 0 ? (
-              <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-200 p-6 flex flex-col items-center">
-                <LucideIcon name="Calendar" size={36} className="text-gray-300 mb-2" />
-                <p className="text-xs font-bold text-gray-500">Nenhum compromisso agendado para esta categoria</p>
-                <button 
-                  onClick={onExplore}
-                  className="mt-3 bg-[#80d6d1] hover:bg-[#006a66] hover:text-white text-gray-950 font-bold px-4 py-2 rounded-full text-[11px] uppercase cursor-pointer"
-                >
-                  Explorar Atividades
-                </button>
-              </div>
-            ) : (
-              filteredAppointments.map((app) => {
-                const isPromo = app.title.includes('Peixada');
-                return (
-                  <motion.article 
-                    layout
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    key={app.id}
-                    className={`p-4 rounded-xl shadow-sm border flex gap-4 transition-all ${isPromo ? 'bg-white border-gray-200' : 'bg-[#fdf8f4] border-orange-100'}`}
-                  >
-                    {/* Icon container */}
-                    <div className={`w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0 ${isPromo ? 'bg-[#80d6d1]/15 text-[#006a6a]' : 'bg-orange-50 text-orange-500'}`}>
-                      <LucideIcon name={app.title.includes('Peixada') ? 'Fish' : 'Music'} size={24} />
-                    </div>
-
-                    <div className="flex-grow">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-extrabold text-sm text-gray-800 flex items-center gap-1">
-                            {app.title}
-                          </h3>
-                          <div className="text-[11px] text-gray-500 mt-1 space-y-0.5">
-                            <span className="flex items-center gap-1">
-                              <LucideIcon name="Calendar" size={10} />
-                              <span>{app.date}</span>
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <LucideIcon name="MapPin" size={10} />
-                              <span>{app.location}</span>
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Action buttons */}
-                        <div className="flex flex-col gap-1 items-end">
-                          <button 
-                            onClick={() => alert(`Localizando "${app.title}"... Evento situado no Cupe!`)}
-                            className="bg-[#80d6d1] text-gray-900 px-3 py-1.5 rounded-lg text-[10px] font-black cursor-pointer uppercase transition-transform"
-                          >
-                            Localizar
-                          </button>
-                          <button 
-                            onClick={() => {
-                              if (confirm('Deseja cancelar este agendamento?')) {
-                                onCancelAppointment(app.id);
-                              }
-                            }}
-                            className="text-red-500 hover:text-red-700 py-1 px-1.5 font-bold text-[10px] uppercase block underline"
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Promo info or dynamic notes */}
-                      <div className={`mt-3 pt-3 border-t border-dashed ${isPromo ? 'border-gray-200 text-gray-700' : 'border-orange-200 text-orange-800'}`}>
-                        <p className="text-[11px] font-bold">{app.organizer}</p>
-                        <p className="text-[10px] opacity-75">{app.price}</p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <LucideIcon name="Star" className="text-yellow-500" size={10} fill="currentColor" />
-                          <span className="text-[9px] font-extrabold">{app.rating}</span>
-                          <span className="text-[9px] opacity-75">({app.reviewsCount})</span>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.article>
-                );
-              })
-            )}
-          </div>
-        </main>
+        ) : (
+          filteredItems.map(item => (
+            <div key={item.id} className="bg-white rounded-2xl p-4 border relative">
+              <h4 className="text-sm font-black">{item.title}</h4>
+              <p className="text-[11px] text-gray-400">{item.organizer} — {item.date}</p>
+              <button onClick={() => { onCancelAppointment(item.id); setRegisteredItems(prev => prev.filter(i => i.id !== item.id)); }} className="text-red-500 text-xs font-bold mt-2 cursor-pointer block ml-auto">Cancelar</button>
+            </div>
+          ))
+        )}
       </div>
-
       <BottomTabNav activeScreen="appointments" onNavigate={onNavigate} />
     </div>
   );
 };
 
 
-// --- SCREEN 11: EVENTS & SERVICES SPLIT (PARTICIPE DOS NOSSOS EVENTOS / SERVIÇOS) ---
-interface EventsServicesProps {
+
+interface TouristProfileProps {
+  onBack: () => void;
+  onLogout: () => void;
   onNavigate: (screen: string) => void;
-  onSelectActivity: (id: string, type: 'evento' | 'servico') => void;
-  initialTab: 'eventos' | 'servicos';
-  activities?: LocalActivity[];
+  touristName?: string;
 }
 
-export const EventsAndServicesScreen: React.FC<EventsServicesProps> = ({ 
-  onNavigate, 
-  onSelectActivity, 
-  initialTab,
-  activities 
+export const TouristProfileScreen: React.FC<TouristProfileProps> = ({ 
+  onBack, 
+  onLogout, 
+  onNavigate,
+  touristName = 'Viajante'
 }) => {
-  const [activeTab, setActiveTab] = useState<'eventos' | 'servicos'>(initialTab);
-  const [selectedCategory, setSelectedCategory] = useState('Todas');
-
-  const categories = activeTab === 'eventos'
-    ? ['Todas', 'Surf', 'Geral', 'Caminhada']
-    : ['Todas', 'Restaurantes', 'Bares', 'Autônomos'];
-
-  const filteredActivities = (activities || ACTIVITIES).filter(a => {
-    if (a.type !== (activeTab === 'eventos' ? 'evento' : 'servico')) return false;
-    if (selectedCategory === 'Todas') return true;
-    return a.category === selectedCategory;
-  });
-
   return (
-    <div className="w-full h-full bg-[#fbf9f8] text-gray-900 overflow-y-auto no-scrollbar pb-32">
-      {/* Top Header toggle selector */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md flex justify-between items-center w-full px-4 py-3 border-b border-gray-100">
+    <div className="w-full h-full bg-[#fbf9f8] text-gray-800 overflow-y-auto no-scrollbar pb-32 flex flex-col p-6">
+      
+      {/* Top Header */}
+      <header className="pt-4 flex items-center justify-between">
         <button 
-          onClick={() => onNavigate('map')}
-          className="w-10 h-10 flex items-center justify-center bg-gray-50 hover:bg-gray-100 rounded-full cursor-pointer transition-transform duration-150"
+          onClick={onBack}
+          className="p-1 px-2.5 rounded-full bg-black/5 hover:bg-black/10 transition-colors flex items-center gap-1 text-xs font-bold text-gray-800 cursor-pointer"
         >
-          <LucideIcon name="ArrowLeft" size={18} />
+          <LucideIcon name="ArrowLeft" size={12} />
+          <span>Explorar</span>
         </button>
-
-        {/* Tab switch bar */}
-        <div className="flex bg-gray-100 rounded-full p-1 shadow-sm">
-          <button 
-            onClick={() => { setActiveTab('eventos'); setSelectedCategory('Todas'); }}
-            className={`px-5 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer ${activeTab === 'eventos' ? 'text-[#006a66] font-bold bg-[#80d6d1]' : 'text-gray-500 hover:text-gray-800'}`}
-          >
-            Eventos
-          </button>
-          
-          <button 
-            onClick={() => { setActiveTab('servicos'); setSelectedCategory('Todas'); }}
-            className={`px-5 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer ${activeTab === 'servicos' ? 'text-[#006a66] font-bold bg-[#80d6d1]' : 'text-gray-500 hover:text-gray-800'}`}
-          >
-            Serviços
-          </button>
+        
+        <div className="text-[10px] font-black uppercase text-[#006a66] tracking-widest">
+          Meu Perfil
         </div>
-
-        <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200">
-          <img src={IMAGES.userProfile} alt="User avatar" className="w-full h-full object-cover" />
-        </div>
+        <div className="w-8" />
       </header>
 
-      <main className="px-4 pt-4">
-        {/* Descriptive Title */}
-        <div className="mb-6">
-          <h1 className="text-xl font-black text-gray-900 tracking-tight leading-none mb-1">
-            {activeTab === 'eventos' ? 'Participe dos nossos eventos' : 'Participe dos nossos serviços'}
+      {/* Perfil Identity (Estilo ADM) */}
+      <section className="mt-10 flex items-center gap-6">
+        <div className="w-24 h-24 bg-[#80d6d1]/20 rounded-full flex items-center justify-center relative shadow-inner border-2 border-white">
+          <LucideIcon name="User" size={48} className="text-[#006a66]" />
+          <span className="absolute bottom-1 right-1 bg-[#006a66] text-white p-1.5 rounded-full border-2 border-[#fbf9f8] shadow-sm">
+            <LucideIcon name="MapPin" size={12} fill="currentColor" />
+          </span>
+        </div>
+
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-black text-gray-900 leading-tight">
+            {touristName}
           </h1>
-          <p className="text-xs text-gray-500">Aproveite as maiores festividades e ofertas gastronômicas da região!</p>
+          <p className="text-xs font-bold text-gray-400 flex items-center gap-1">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <span>TURISTA EXPLORADOR</span>
+          </p>
+        </div>
+      </section>
+
+      {/* Menu de Navegação (Estilo Dashboard) */}
+      <nav className="mt-12 space-y-3.5">
+        
+        {/* Link para Favoritos */}
+        <button 
+          onClick={() => alert("Em breve: Sua lista de desejos em Porto!")}
+          className="w-full text-left px-4 py-4 bg-white border border-gray-100 hover:border-[#80d6d1] rounded-2xl text-gray-800 font-black text-xs uppercase tracking-wide transition-all shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex items-center justify-between cursor-pointer"
+        >
+          <span className="flex items-center gap-3">
+            <div className="p-2 bg-red-50 text-red-500 rounded-lg">
+              <LucideIcon name="Heart" size={16} fill="currentColor" />
+            </div>
+            <span>Meus Favoritos</span>
+          </span>
+          <LucideIcon name="ChevronRight" size={14} className="text-gray-300" />
+        </button>
+
+        {/* Atalho para Reservas */}
+        <button 
+          onClick={() => onNavigate('appointments')}
+          className="w-full text-left px-4 py-4 bg-white border border-gray-100 hover:border-[#80d6d1] rounded-2xl text-gray-800 font-black text-xs uppercase tracking-wide transition-all shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex items-center justify-between cursor-pointer"
+        >
+          <span className="flex items-center gap-3">
+            <div className="p-2 bg-blue-50 text-blue-500 rounded-lg">
+              <LucideIcon name="CalendarCheck" size={16} />
+            </div>
+            <span>Histórico de Reservas</span>
+          </span>
+          <LucideIcon name="ChevronRight" size={14} className="text-gray-300" />
+        </button>
+
+        {/* Botão de Editar Dados - Inserir no Perfil do Turista */}
+<div className="px-6 mt-4">
+  <button 
+    onClick={() => /* Altere o estado de navegação para abrir a UpdateTouristProfileScreen */ console.log('Ir para update')}
+    className="w-full bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 font-bold py-3 px-4 rounded-2xl text-xs uppercase tracking-wider shadow-sm flex items-center justify-between transition-all active:scale-[0.98] cursor-pointer"
+  >
+    <div className="flex items-center gap-3">
+      <LucideIcon name="UserCog" size={16} className="text-[#006a66]" />
+      <span>Editar meus dados pessoais</span>
+    </div>
+    <LucideIcon name="ChevronRight" size={16} className="text-gray-400" />
+  </button>
+</div>
+
+        {/* Ajuda/Suporte */}
+        <button 
+          onClick={() => alert("Abrindo chat de suporte...")}
+          className="w-full text-left px-4 py-4 bg-white border border-gray-100 hover:border-[#80d6d1] rounded-2xl text-gray-800 font-black text-xs uppercase tracking-wide transition-all shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex items-center justify-between cursor-pointer"
+        >
+          <span className="flex items-center gap-3">
+            <div className="p-2 bg-yellow-50 text-yellow-600 rounded-lg">
+              <LucideIcon name="HelpCircle" size={16} />
+            </div>
+            <span>Suporte e Ajuda</span>
+          </span>
+          <LucideIcon name="ChevronRight" size={14} className="text-gray-300" />
+        </button>
+      </nav>
+
+      {/* Rodapé com Logout */}
+      <footer className="mt-auto pt-10 flex flex-col items-center gap-4">
+        <button 
+          onClick={onLogout}
+          className="w-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white font-black py-4 rounded-2xl transition-all text-xs uppercase tracking-widest cursor-pointer flex items-center justify-center gap-2"
+        >
+          <LucideIcon name="LogOut" size={14} />
+          Sair da Conta
+        </button>
+        
+        <p className="text-[10px] font-bold text-gray-300 uppercase tracking-tighter">
+          Porto de Galinhas App • v1.0.4
+        </p>
+      </footer>
+      
+    </div>
+  );
+};
+
+interface UpdateTouristProfileProps {
+  onBack: () => void;
+  currentName: string;
+  currentEmail: string;
+  currentAvatar?: string;
+  onSave: (updatedData: { name: string; email: string; avatarUrl: string }) => void;
+}
+
+export const UpdateTouristProfileScreen: React.FC<UpdateTouristProfileProps> = ({
+  onBack,
+  currentName,
+  currentEmail,
+  currentAvatar,
+  onSave,
+}) => {
+  const [name, setName] = useState(currentName);
+  const [email, setEmail] = useState(currentEmail);
+  const [password, setPassword] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState(currentAvatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    // Simulação da chamada da API
+    setTimeout(() => {
+      onSave({ name, email, avatarUrl });
+      setLoading(false);
+      onBack();
+    }, 800);
+  };
+
+  return (
+    <div className="w-full h-full bg-[#fbf9f8] text-gray-900 overflow-y-auto no-scrollbar pb-32 flex flex-col p-6">
+      {/* Header */}
+      <header className="pt-2 flex items-center justify-between border-b border-gray-100 pb-4">
+        <button 
+          onClick={onBack}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer flex items-center justify-center"
+        >
+          <LucideIcon name="ArrowLeft" size={20} className="text-gray-700" />
+        </button>
+        <h1 className="text-sm font-black text-gray-800 uppercase tracking-wide">Meus Dados Pessoais</h1>
+        <div className="w-9" />
+      </header>
+
+      {/* Foto de Perfil do Turista */}
+      <section className="mt-8 flex flex-col items-center">
+        <div className="relative w-24 h-24 rounded-full border-4 border-white shadow-md overflow-hidden group">
+          <img src={avatarUrl} alt="Avatar Turista" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <LucideIcon name="Camera" size={18} className="text-white" />
+          </div>
+        </div>
+        <p className="text-[11px] font-bold text-[#006a66] uppercase tracking-wider mt-3">Alterar Foto de Perfil</p>
+      </section>
+
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="mt-8 space-y-4 flex-grow">
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+          <label className="text-[9px] font-black text-gray-400 uppercase tracking-wider block mb-1">Nome</label>
+          <div className="flex items-center gap-3">
+            <LucideIcon name="User" size={16} className="text-gray-400" />
+            <input 
+              type="text" 
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="w-full bg-transparent border-none outline-none text-xs font-bold text-gray-800"
+              required
+            />
+          </div>
         </div>
 
-        {/* Categories dynamic selector row */}
-        <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6 pb-2">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4.5 py-1.8 rounded-full text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer ${selectedCategory === cat ? 'bg-[#80d6d1] text-gray-950 shadow-sm' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-            >
-              {cat}
-            </button>
-          ))}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+          <label className="text-[9px] font-black text-gray-400 uppercase tracking-wider block mb-1">E-mail</label>
+          <div className="flex items-center gap-3">
+            <LucideIcon name="Mail" size={16} className="text-gray-400" />
+            <input 
+              type="email" 
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="w-full bg-transparent border-none outline-none text-xs font-bold text-gray-800"
+              required
+            />
+          </div>
         </div>
 
-        {/* Horizontal list of items */}
-        <div className="space-y-4">
-          {filteredActivities.map((item) => (
-            <motion.div 
-              layout
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              key={item.id}
-              className="bg-white p-4 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative border border-gray-100 flex gap-4"
-            >
-              {/* Image box */}
-              <div className="w-20 h-20 bg-gray-50 rounded-xl overflow-hidden shrink-0 relative flex items-center justify-center">
-                <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/5" />
-              </div>
-
-              <div className="flex-grow pr-10">
-                <h3 className="font-extrabold text-[#006a66] text-sm mb-1">{item.title}</h3>
-                
-                <div className="space-y-0.5 text-[10px] text-gray-500 mb-2">
-                  <div className="flex items-center gap-1">
-                    <LucideIcon name="Calendar" size={11} />
-                    <span>{item.date}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <LucideIcon name="MapPin" size={11} />
-                    <span>{item.location}</span>
-                  </div>
-                </div>
-
-                <div className="text-[11px] leading-tight mb-2">
-                  <span className="font-bold text-gray-800">{item.organizer}</span>
-                  <p className="text-gray-500">{item.price}</p>
-                </div>
-
-                <div className="flex items-center gap-1 text-[11px]">
-                  <LucideIcon name="Star" size={12} className="text-yellow-400 fill-current" />
-                  <span className="font-bold text-gray-800">{item.rating}</span>
-                  <span className="text-gray-400">({item.reviewsCount})</span>
-                </div>
-              </div>
-
-              {/* Float side trigger button */}
-              <button 
-                onClick={() => onSelectActivity(item.id, item.type)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-[#80d6d1] text-gray-950 font-black px-4 py-2 rounded-lg text-[10px] uppercase cursor-pointer hover:bg-[#68bbae] active:scale-95 transition-all shadow-sm"
-              >
-                {activeTab === 'eventos' ? 'Ver' : 'Localizar'}
-              </button>
-            </motion.div>
-          ))}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+          <label className="text-[9px] font-black text-gray-400 uppercase tracking-wider block mb-1">Senha</label>
+          <div className="flex items-center gap-3">
+            <LucideIcon name="Lock" size={16} className="text-gray-400" />
+            <input 
+              type="password" 
+              value={password}
+              placeholder="••••••••"
+              onChange={e => setPassword(e.target.value)}
+              className="w-full bg-transparent border-none outline-none text-xs font-bold text-gray-800"
+            />
+          </div>
         </div>
-      </main>
 
-      <BottomTabNav activeScreen="events_services" onNavigate={onNavigate} />
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-[#006a66] hover:bg-[#00524f] text-white font-extrabold py-4 rounded-2xl text-xs uppercase tracking-wider shadow-md transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer mt-6"
+        >
+          {loading ? 'Salvando...' : 'Atualizar Perfil'}
+        </button>
+      </form>
     </div>
   );
 };
