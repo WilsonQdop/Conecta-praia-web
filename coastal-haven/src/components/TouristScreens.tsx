@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { LucideIcon } from './LucideIcon';
 import { LocalActivity, Appointment, Review } from '../types';
 import { ACTIVITIES, IMAGES } from '../data';
-import { authService, PostEventResponseDTO, postEventService, PostServiceResponseDTO, postServiceService, registeredService, subscriptionService, touristService, uploadService } from '../services/api';
-import { adminService,} from '../services/api';
+import { authService, PostEventResponseDTO, postEventService, PostServiceResponseDTO, postServiceService, registeredService, ReviewResponseDTO, reviewService, subscriptionService, touristService, uploadService } from '../services/api';
+import { adminService} from '../services/api';
 
 // =================================================================
 // 🧭 COMPONENTE: BOTTOM TAB NAV BAR (COMPARTILHADO)
@@ -427,6 +427,8 @@ export const EventDetailScreen: React.FC<EventDetailProps> = ({
 }) => {
   const [eventData, setEventData] = React.useState<PostEventResponseDTO | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [reviews, setReviews] = useState<ReviewResponseDTO[]>([]);
 
   React.useEffect(() => {
     adminService.getAllEvents()
@@ -436,6 +438,18 @@ export const EventDetailScreen: React.FC<EventDetailProps> = ({
       })
       .catch(() => setEventData(null))
       .finally(() => setLoading(false));
+  }, [activityId]);
+
+  React.useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        const data = await reviewService.getEventReviews(activityId);
+        setReviews(data);
+      } catch (error) {
+        console.error('Erro ao carregar avaliações:', error);
+      }
+    };
+    if (activityId) loadReviews();
   }, [activityId]);
 
   if (loading) return (
@@ -521,6 +535,28 @@ export const EventDetailScreen: React.FC<EventDetailProps> = ({
             <p className="text-xs text-gray-600 leading-relaxed">{eventData.description}</p>
           </div>
 
+          <div className="mb-6">
+            <h3 className="text-sm font-black mb-3">Avaliações ({reviews.length})</h3>
+            {reviews.length === 0 ? (
+              <p className="text-xs text-gray-400">Nenhuma avaliação ainda.</p>
+            ) : (
+              reviews.map(r => (
+                <div key={r.id} className="bg-gray-50 rounded-xl p-3 mb-2">
+                  <div className="flex justify-between">
+                    <span className="font-bold text-xs">{r.userName}</span>
+                    <div className="flex">
+                      {[1,2,3,4,5].map(s => (
+                        <LucideIcon key={s} name="Star" size={12} className={s <= r.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'} />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">{r.comment}</p>
+                  <p className="text-[9px] text-gray-400 mt-1">{new Date(r.date).toLocaleDateString('pt-BR')}</p>
+                </div>
+              ))
+            )}
+          </div>
+
           <button
             onClick={async () => {
               try {
@@ -534,9 +570,36 @@ export const EventDetailScreen: React.FC<EventDetailProps> = ({
           >
             Agendar
           </button>
+          <button
+            onClick={() => setShowRatingModal(true)}
+            className="w-full bg-[#80d6d1] text-gray-900 font-black py-3.5 px-4 rounded-2xl text-xs uppercase tracking-wide cursor-pointer mt-3"
+          >
+            Avaliar Evento
+          </button>
         </div>
       </section>
 
+          {showRatingModal && (
+          <RatingModal
+            type="evento"
+            onClose={() => setShowRatingModal(false)}
+            onSubmit={async (stars, comment) => {
+  try {
+    await reviewService.reviewEvent(eventData.id, { rating: stars, comment });
+    alert('Avaliação enviada com sucesso!');
+    
+    // ⭐ RECARREGA AS AVALIAÇÕES AQUI ⭐
+    const novasReviews = await reviewService.getEventReviews(eventData.id);
+    setReviews(novasReviews);
+    
+    setShowRatingModal(false);
+  } catch (error: any) {
+    alert(error.response?.data?.message || 'Erro ao enviar avaliação');
+  }
+}}
+          />
+        )}
+        
       <BottomTabNav activeScreen="map" onNavigate={onNavigate} />
     </div>
   );
@@ -550,6 +613,8 @@ export const ServiceDetailScreen: React.FC<ServiceDetailProps> = ({
 }) => {
   const [serviceData, setServiceData] = React.useState<PostServiceResponseDTO | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [reviews, setReviews] = useState<ReviewResponseDTO[]>([]);
+  const [showRatingModal, setShowRatingModal] = useState(false);
 
   React.useEffect(() => {
     adminService.getAllServices()
@@ -560,6 +625,22 @@ export const ServiceDetailScreen: React.FC<ServiceDetailProps> = ({
       .catch(() => setServiceData(null))
       .finally(() => setLoading(false));
   }, [activityId]);
+
+ React.useEffect(() => {
+  const loadReviews = async () => {
+    try {
+      console.log('[DEBUG] Carregando avaliações para o serviço ID:', activityId);
+      const data = await reviewService.getServiceReviews(activityId);
+      console.log('[DEBUG] Avaliações recebidas:', data);
+      setReviews(data);
+    } catch (error) {
+      console.error('[DEBUG] Erro ao carregar avaliações:', error);
+    }
+  };
+  if (activityId) {
+    loadReviews();
+  }
+}, [activityId]);
 
   if (loading) return (
     <div className="w-full h-full bg-[#fbf9f8] flex items-center justify-center">
@@ -644,25 +725,74 @@ export const ServiceDetailScreen: React.FC<ServiceDetailProps> = ({
             <p className="text-xs text-gray-600 leading-relaxed">{serviceData.description}</p>
           </div>
 
+          <div className="mb-6">
+            <h3 className="text-sm font-black mb-3">Avaliações ({reviews.length})</h3>
+            {reviews.length === 0 ? (
+              <p className="text-xs text-gray-400">Nenhuma avaliação ainda.</p>
+            ) : (
+              reviews.map(r => (
+                <div key={r.id} className="bg-gray-50 rounded-xl p-3 mb-2">
+                  <div className="flex justify-between">
+                    <span className="font-bold text-xs">{r.userName}</span>
+                    <div className="flex">
+                      {[1,2,3,4,5].map(s => (
+                        <LucideIcon key={s} name="Star" size={12} className={s <= r.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'} />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">{r.comment}</p>
+                  <p className="text-[9px] text-gray-400 mt-1">{new Date(r.date).toLocaleDateString('pt-BR')}</p>
+                </div>
+              ))
+            )}
+          </div>
+
           <button
            onClick={async () => {
-    try {
-      console.log('[DEBUG] Tentando se inscrever em:', serviceData.id);
-      await subscriptionService.subscribeToService(serviceData.id);
-      console.log('[DEBUG] Inscrição realizada com sucesso!');
-      alert('Inscrição realizada! Veja em Reservas.');
-    } catch (e: any) {
-      console.error('[ERROR] Erro ao se inscrever:', e);
-      console.error('[ERROR] Response:', e.response?.data);
-      alert(e.response?.data?.message || 'Erro ao se inscrever');
-    }
-            }}
-            className="w-full bg-[#006a66] text-white font-black py-3.5 px-4 rounded-2xl text-xs uppercase tracking-wide cursor-pointer"
+              try {
+                console.log('[DEBUG] Tentando se inscrever em:', serviceData.id);
+                await subscriptionService.subscribeToService(serviceData.id);
+                console.log('[DEBUG] Inscrição realizada com sucesso!');
+                alert('Inscrição realizada! Veja em Reservas.');
+              } catch (e: any) {
+                console.error('[ERROR] Erro ao se inscrever:', e);
+                console.error('[ERROR] Response:', e.response?.data);
+                alert(e.response?.data?.message || 'Erro ao se inscrever');
+              }
+                      }}
+                      className="w-full bg-[#006a66] text-white font-black py-3.5 px-4 rounded-2xl text-xs uppercase tracking-wide cursor-pointer"
+                    >
+                      Inscrever
+                    </button>
+
+                    <button
+            onClick={() => setShowRatingModal(true)}
+            className="w-full bg-[#80d6d1] text-gray-900 font-black py-3.5 px-4 rounded-2xl text-xs uppercase tracking-wide cursor-pointer mt-3"
           >
-            Inscrever
+            Avaliar Serviço
           </button>
         </div>
       </section>
+      {showRatingModal && (
+      <RatingModal
+        type="servico"
+        onClose={() => setShowRatingModal(false)}
+        onSubmit={async (stars, comment) => {
+          try {
+    await reviewService.reviewService(serviceData.id, { rating: stars, comment });
+    alert('Avaliação enviada com sucesso!');
+    
+    // ⭐ RECARREGA AS AVALIAÇÕES AQUI ⭐
+    const novasReviews = await reviewService.getServiceReviews(serviceData.id);
+    setReviews(novasReviews);
+    
+    setShowRatingModal(false);
+  } catch (error: any) {
+    alert(error.response?.data?.message || 'Erro ao enviar avaliação');
+  }
+        }}
+      />
+    )}
 
       <BottomTabNav activeScreen="map" onNavigate={onNavigate} />
     </div>

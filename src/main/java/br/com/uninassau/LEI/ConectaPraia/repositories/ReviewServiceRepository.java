@@ -10,4 +10,5 @@ import java.util.UUID;
 
 public interface ReviewServiceRepository extends BaseReviewRepository<ReviewServices> {
     List<ReviewService> findByPostsServiceId(UUID postsServiceId);
+    List<ReviewServices> findByPostsService(PostsService postsService);
 }

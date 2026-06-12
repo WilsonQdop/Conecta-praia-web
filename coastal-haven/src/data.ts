@@ -1,4 +1,8 @@
 import { LocalActivity, Review, Appointment } from './types';
+import beach1 from './assets/BoaViagem.jpeg';
+import beach2 from './assets/Carneiros.jpeg';
+import beach3 from './assets/PortoDeGalinhas.jpeg';
+
 
 export const INITIAL_REVIEWS: Review[] = [
   {
@@ -38,7 +42,10 @@ export const IMAGES = {
   drink: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBIFSZymU8rL-lMngNLa1p9-HklMHPliRolRXen5_ia8mzzqsuDiV44nNMCY2okTJtZZ3y7bsQ8YpRWT0SC_rwXP19G5hC9tHQleuY9-ksc0zlPqssgdNS5Qt0jqLbC2PrUBOIpRIx8qAUjnKLmIIWyxDuvatB_5j7W7MfzeMbIrUUrQhCzjihm1mFto2OaByjLYZuaWMCSlAtN5RusU0Z6rMbI8jKTti--pujnPcooHOsq67A5ZmoI55DU85YatYs4aicTE3BQcwhK',
   soup: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDDXbknGLRHYmhFq-qrOWtwxlpBFsKNrVDcn_LH_HYbqRizmPohsUl3nHHuxRKKqVfbLUihrXzGWgCRgw8gsvzBy4SH2HNvbYZP-a9HLUbaoOtDzWMmgFZ4qW2PRIL5YU1S2sarYXzQDYc70sDVTvfzwFoXZpAfxtDJkhWYsBb3gANejngQaWIYc-t1RZYQEdjgnOk9i2oWeqFqvbW7LOq1Q7zc1zdN91JsfEsfkfd-DnC4ffujjJMRf2yeg2re_154gT_3nq8MKxwA',
   eventDetailMockMap: 'https://lh3.googleusercontent.com/aida-public/AB6AXuArsmvyoh7dbnKS_GP_BHBhCWBfM4Nn0yuSn7w7wSMSkZEve7G1dvv3bhj9cuYHIXZICWSCa6AQaDc2TJvXWnN3UV8WAjaLdszux6ViUQS54cTvF9ZGWbcs9av2Tfurk_VbE8l2v0bNbNA4WvTQSoIM7kOTqhEY2fcIW8SRVVDL22ZudoaptKy8-2HFllV90SbZECjkc2NGEIgN8_J0hes1Hwo9sjvEHMV1qRvLKlCL9fd78pR2Gvmb01NHXWX0SDFd0NFEPnUda7Cv',
-  serviceDetailMockMap: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD62eGqyhYdImkbbVPQuPxcT5fjre0RhbYNrOju62bjyJKVy-k3veVIsbItVpO1PV0RZpztlPXogTvguDTBfOZJuVy2HWSzWSEzVm7k450TFDB-o-3J5atD92PmN8Gs9rihoOEZkZZMpqSynrOsmDLNH-1HwMmr_dcDVztZ9YlU6z-6DlHdp5eqjFmFb9J4ccZsoG_FV0593DedHdz8K5i9A-WcPgExQ0Hkz-YHogAPbqoyMHWJUC_gFzm-a0xg6EPOc08Gbgqz8bic'
+  serviceDetailMockMap: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD62eGqyhYdImkbbVPQuPxcT5fjre0RhbYNrOju62bjyJKVy-k3veVIsbItVpO1PV0RZpztlPXogTvguDTBfOZJuVy2HWSzWSEzVm7k450TFDB-o-3J5atD92PmN8Gs9rihoOEZkZZMpqSynrOsmDLNH-1HwMmr_dcDVztZ9YlU6z-6DlHdp5eqjFmFb9J4ccZsoG_FV0593DedHdz8K5i9A-WcPgExQ0Hkz-YHogAPbqoyMHWJUC_gFzm-a0xg6EPOc08Gbgqz8bic',
+  beach1: beach1,
+  beach2: beach2,
+  beach3: beach3
 };
 
 export const ACTIVITIES: LocalActivity[] = [

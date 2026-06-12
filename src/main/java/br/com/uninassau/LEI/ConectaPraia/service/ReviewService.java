@@ -1,13 +1,16 @@
 package br.com.uninassau.LEI.ConectaPraia.service;
 
 import br.com.uninassau.LEI.ConectaPraia.domain.*;
+import br.com.uninassau.LEI.ConectaPraia.dto.ReviewResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.dto.request.ReviewRequestDTO;
 import br.com.uninassau.LEI.ConectaPraia.repositories.*;
 import br.com.uninassau.LEI.ConectaPraia.utils.AuthUtil;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import java.util.stream.Collectors;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -99,4 +102,43 @@ public class ReviewService {
 
         this.reviewEntrepreneurRepository.save(review);
     }
+    public List<ReviewResponseDTO> getServiceReviews(UUID serviceId) {
+    // Busca o serviço pelo ID
+    PostsService service = postServiceRepository.findById(serviceId)
+        .orElseThrow(() -> new RuntimeException("Serviço não encontrado com ID: " + serviceId));
+    
+    // Busca todas as avaliações do serviço - USA ReviewServices (entidade)
+    List<ReviewServices> reviews = reviewServiceRepository.findByPostsService(service);
+    
+    // Converte para DTO
+    return reviews.stream()
+        .map(review -> new ReviewResponseDTO(
+            review.getId().toString(),
+            review.getTourist().getName(),
+            review.getRating(),
+            review.getComment(),
+            review.getCreatedAt().toString()
+        ))
+        .collect(Collectors.toList());
+}
+
+public List<ReviewResponseDTO> getEventReviews(UUID eventId) {
+    // Busca o evento pelo ID
+    PostsEvent event = postEventRepository.findById(eventId)
+        .orElseThrow(() -> new RuntimeException("Evento não encontrado com ID: " + eventId));
+    
+    // Busca todas as avaliações do evento - USA ReviewEvent (entidade)
+    List<ReviewEvent> reviews = reviewEventRepository.findByPostsEvent(event);
+    
+    // Converte para DTO
+    return reviews.stream()
+        .map(review -> new ReviewResponseDTO(
+            review.getId().toString(),
+            review.getTourist().getName(),
+            review.getRating(),
+            review.getComment(),
+            review.getCreatedAt().toString()
+        ))
+        .collect(Collectors.toList());
+}
 }

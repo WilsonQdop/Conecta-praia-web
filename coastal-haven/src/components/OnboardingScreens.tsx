@@ -10,14 +10,55 @@ interface WelcomeProps {
 }
 
 export const WelcomeScreen: React.FC<WelcomeProps> = ({ onNext }) => {
+  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
+
+  // Array com as 3 imagens de praias
+  const carouselImages = [
+    IMAGES.beach1, // Praia com prédios
+    IMAGES.beach2, // Praia com espreguiçadeiras
+    IMAGES.beach3, // Praia com água cristalina
+  ];
+
+  // Auto-play carrossel a cada 4 segundos
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % carouselImages.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [carouselImages.length]);
+
   return (
     <div className="relative w-full h-219.5 flex flex-col justify-end overflow-hidden bg-black text-white">
       
-      {/* Background Image - Agora cobrindo 100% do container absoluto por trás */}
-      <div 
-        className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-10000 ease-out scale-105"
-        style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.4)), url(${IMAGES.welcomeBg})` }}
-      />
+      {/* Carrossel de Imagens de Fundo */}
+      {carouselImages.map((image, index) => (
+        <div
+          key={index}
+          className={`absolute inset-0 z-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${
+            index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+          }`}
+          style={{
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.4)), url(${image})`,
+          }}
+        />
+      ))}
+
+      {/* Indicadores do Carrossel */}
+      <div className="absolute bottom-[35vh] left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
+        {carouselImages.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentImageIndex(index)}
+            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              index === currentImageIndex
+                ? 'bg-white w-8'
+                : 'bg-white/40 hover:bg-white/60'
+            }`}
+            aria-label={`Ir para imagem ${index + 1}`}
+          />
+        ))}
+      </div>
 
       {/* Card Content - Ajustado para ocupar 1/3 da tela (h-1/3) ou se ajustar perfeitamente ao fim */}
       <motion.section 
@@ -50,6 +91,7 @@ export const WelcomeScreen: React.FC<WelcomeProps> = ({ onNext }) => {
     </div>
   );
 };
+
 
 interface LoginProps {
   onBack: () => void;
