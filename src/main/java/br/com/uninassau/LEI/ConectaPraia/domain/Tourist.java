@@ -9,6 +9,7 @@ import java.util.List;
 @DiscriminatorValue("Turista")
 public class Tourist extends User {
 
+    @Column(columnDefinition = "TEXT")
     private String avatarUrl;
     private String bio;
 

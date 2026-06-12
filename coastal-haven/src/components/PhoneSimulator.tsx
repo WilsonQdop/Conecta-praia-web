@@ -8,8 +8,8 @@ import { LucideIcon } from './LucideIcon';
 import { AppState, UserRole, LocalActivity, Appointment, Review } from '../types';
 import { WelcomeScreen, LoginScreen, RegisterScreen, RoleSelectScreen } from './OnboardingScreens';
 
-import { TouristSearchScreen, InteractiveMapScreen, EventDetailScreen, ServiceDetailScreen, RatingModal, AppointmentsScreen, EventsAndServicesScreen, TouristProfileScreen } from './TouristScreens';
-import { EntrepreneurProfileScreen, ReviewsManagementScreen, EntrepreneurServicesScreen } from './EntrepreneurScreens';
+import { TouristSearchScreen, InteractiveMapScreen, EventDetailScreen, ServiceDetailScreen, RatingModal, AppointmentsScreen, EventsAndServicesScreen, TouristProfileScreen, UpdateTouristProfileScreen } from './TouristScreens';
+import { EntrepreneurProfileScreen, ReviewsManagementScreen, EntrepreneurServicesScreen, UpdateEntrepreneurProfileScreen } from './EntrepreneurScreens';
 import { AdminAllActivitiesScreen, AdminAllUsersScreen, AdminProfileScreen } from './AdminScreens';
 import { CreateActivityScreen } from './CreateActivityScreen';
 import { IMAGES, ACTIVITIES, INITIAL_REVIEWS, INITIAL_APPOINTMENTS } from '../data';
@@ -30,7 +30,8 @@ export const PhoneSimulator: React.FC = () => {
     activeTab: 'eventos',
     sidebarOpen: false,
     favorites: ['act-1', 'act-4'],
-    activities: ACTIVITIES
+    activities: ACTIVITIES, 
+    currentUserAvatar: '',
   });
 
   // ════════════════════════════════════════════════════════════════
@@ -41,7 +42,8 @@ export const PhoneSimulator: React.FC = () => {
   const userEmail = localStorage.getItem('userEmail');
   const userRole = localStorage.getItem('userRole');
   const userName = localStorage.getItem('userName');
-  // ✅ Linha removida — não precisa dela aqui
+   const userAvatar = localStorage.getItem('userAvatar');
+
 
   if (token && userEmail && userRole) {
     const mappedRole = mapBackendRoleToFrontend(userRole);
@@ -54,6 +56,7 @@ export const PhoneSimulator: React.FC = () => {
       currentRole: mappedRole,
       currentScreen: nextScreen,
       currentUserName: userName || '',
+       currentUserAvatar: userAvatar || '',
     }));
   }
 }, []);
@@ -148,6 +151,8 @@ export const PhoneSimulator: React.FC = () => {
   // ════════════════════════════════════════════════════════════════
 const handleLogin = async (email: string, role: UserRole, name: string) => {
   console.log('[LOGIN] Login bem-sucedido para:', email, 'Role:', role, 'Name:', name);
+
+  
   
   const nextScreen = getScreenByRole(role);
 
@@ -320,6 +325,7 @@ const handleLogin = async (email: string, role: UserRole, name: string) => {
             onLogout={handleLogout}
             onNavigate={changeScreen}
             touristName={state.currentUserName || state.currentUserEmail.split('@')[0]} 
+            touristAvatar={state.currentUserAvatar} 
           />
         );
       
@@ -415,14 +421,16 @@ const handleLogin = async (email: string, role: UserRole, name: string) => {
         );
       
       case 'entrepreneur_profile':
-        return (
-          <EntrepreneurProfileScreen 
-            onBack={() => changeScreen('welcome')}
-            onNavigate={changeScreen}
-            reviews={state.reviews}
-            onLogout={handleLogout}
-          />
-        );
+  return (
+    <EntrepreneurProfileScreen 
+      onBack={() => changeScreen('welcome')}
+      onNavigate={changeScreen}
+      reviews={state.reviews}
+      onLogout={handleLogout}
+      entrepreneurAvatar={state.currentUserAvatar}
+      entrepreneurName={state.currentUserName} // ✅ adiciona
+    />
+  );
       
       case 'reviews_mgmt':
         return (
@@ -442,6 +450,26 @@ const handleLogin = async (email: string, role: UserRole, name: string) => {
             
           />
         );
+       case 'update_profile':
+  return (
+    <UpdateEntrepreneurProfileScreen
+      onBack={() => changeScreen('entrepreneur_profile')}
+      currentName={state.currentUserName}
+      currentEmail={state.currentUserEmail}
+      currentAvatar={state.currentUserAvatar}
+      onSave={({ name, avatarUrl }) => {
+        localStorage.setItem('userName', name);
+        localStorage.setItem('userAvatar', avatarUrl); // ✅ persiste
+        setState(prev => ({
+          ...prev,
+          currentUserName: name,
+          currentUserAvatar: avatarUrl,
+        }));
+        changeScreen('entrepreneur_profile');
+      }}
+    />
+  );
+
       
       case 'appointments':
         return (
@@ -476,6 +504,25 @@ const handleLogin = async (email: string, role: UserRole, name: string) => {
             
           />
         );
+
+        case 'update_tourist_profile':
+  return (
+    <UpdateTouristProfileScreen
+      onBack={() => changeScreen('profile_hub')}
+      currentName={state.currentUserName}
+      currentEmail={state.currentUserEmail}
+      onSave={({ name, email, avatarUrl }) => {
+        localStorage.setItem('userAvatar', avatarUrl); 
+        setState(prev => ({
+          ...prev,
+          currentUserName: name,
+          currentUserEmail: email,
+          currentUserAvatar: avatarUrl,
+        }));
+        changeScreen('profile_hub');
+      }}
+    />
+  );
       
       default:
         return <WelcomeScreen onNext={() => changeScreen('login')} />;
@@ -499,7 +546,7 @@ const handleLogin = async (email: string, role: UserRole, name: string) => {
         {state.isLoggedIn && (
           <div className="flex items-center space-x-4 text-sm">
             <span className="text-gray-400 hidden sm:inline">
-              Olá, <strong>{state.currentUserEmail.split('@')[0]}</strong>
+              Olá, <strong>{(state.currentUserEmail || '').split('@')[0]}</strong>
             </span>
             <span className="text-xs bg-[#80d6d1] text-gray-900 px-3 py-1 rounded-full font-bold">
               {state.currentRole}

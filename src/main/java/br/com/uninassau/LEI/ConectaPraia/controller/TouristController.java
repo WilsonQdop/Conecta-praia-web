@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/subscriptions")
-@PreAuthorize("hasRole('TURISTA')")
+
 public class TouristController {
 
     private final TouristService touristService;
@@ -21,18 +21,21 @@ public class TouristController {
         this.touristService = touristService;
     }
 
+    @PreAuthorize("hasRole('TURISTA')")
     @PostMapping("/services/{serviceId}")
     public ResponseEntity<TouristSubscribeResponseDTO> subscribeToService(@PathVariable UUID serviceId) {
         TouristSubscribeResponseDTO response = this.touristService.subscribeToService(serviceId);
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasRole('TURISTA')")
     @PostMapping("/events/{eventId}")
     public ResponseEntity<TouristSubscribeResponseDTO> subscribeToEvent(@PathVariable UUID eventId) {
         TouristSubscribeResponseDTO response = this.touristService.subscribeToEvent(eventId);
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_TURISTA')")
     @PutMapping("/update")
     public ResponseEntity<Void> updateTourist(@Valid @RequestBody UpdateProfileRequestDTO request) {
 

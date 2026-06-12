@@ -4,6 +4,8 @@ import br.com.uninassau.LEI.ConectaPraia.domain.Registered;
 import br.com.uninassau.LEI.ConectaPraia.domain.Tourist;
 import br.com.uninassau.LEI.ConectaPraia.dto.PostEventResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.dto.PostServiceResponseDTO;
+import br.com.uninassau.LEI.ConectaPraia.dto.RegisteredEventResponseDTO;
+import br.com.uninassau.LEI.ConectaPraia.dto.RegisteredServiceResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.repositories.RegisteredRepository;
 import br.com.uninassau.LEI.ConectaPraia.utils.AuthUtil;
 import br.com.uninassau.LEI.ConectaPraia.utils.ConvertDTO;
@@ -26,7 +28,7 @@ public class RegisteredService {
     }
 
 
-    public List<PostEventResponseDTO> findAllRegisteredEventsForTourist() {
+    public List<RegisteredEventResponseDTO> findAllRegisteredEventsForTourist() {
         Tourist tourist = (Tourist) this.authUtil.getUserLoggedIn();
 
         List<Registered> registros = this.registeredRepository
@@ -34,11 +36,19 @@ public class RegisteredService {
 
         return registros.stream()
                 .map(Registered::getPostEvent)
-                .map(this.convertDTO::convertToEventResponseDTO)
+                .map(event -> new RegisteredEventResponseDTO(
+                        event.getId(),
+                        event.getTitle(),
+                        event.getEventType().name(),
+                        event.getLocation(),
+                        event.getValueDescription(),
+                        event.getDateHour(),
+                        event.getEntrepreneur().getName()
+                ))
                 .collect(Collectors.toList());
     }
 
-    public List<PostServiceResponseDTO> findAllRegisteredServicesForTourist() {
+    public List<RegisteredServiceResponseDTO> findAllRegisteredServicesForTourist() {
         Tourist tourist = (Tourist) this.authUtil.getUserLoggedIn();
 
         List<Registered> registros = this.registeredRepository
@@ -46,7 +56,15 @@ public class RegisteredService {
 
         return registros.stream()
                 .map(Registered::getPostService)
-                .map(this.convertDTO::convertToResponseDTO)
+                .map(service -> new RegisteredServiceResponseDTO(
+                        service.getId(),
+                        service.getTitle(),
+                        service.getServiceType().name(),
+                        service.getLocation(),
+                        service.getValueDescription(),
+                        service.getDateHour(),
+                        service.getEntrepreneur().getName()
+                ))
                 .collect(Collectors.toList());
     }
 }

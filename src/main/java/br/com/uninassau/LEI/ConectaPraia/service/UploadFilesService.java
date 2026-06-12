@@ -36,7 +36,7 @@ public class UploadFilesService {
 
             Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
 
-            return targetPath.toString();
+            return "http://localhost:8080/Uploads_imagens/" + fileName;
 
         }  catch (Exception e) {
         throw new RuntimeException("Erro ao salvar o arquivo: " + e.getMessage());

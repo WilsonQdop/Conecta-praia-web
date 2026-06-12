@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("empreendedor")
-@PreAuthorize("hasRole('EMPREENDEDOR')")
 public class EntrepreneurController {
 
     private final EntrepreneurService entrepreneurService;
@@ -22,6 +21,7 @@ public class EntrepreneurController {
     }
 
     @PutMapping("/update")
+    @PreAuthorize("hasAuthority('ROLE_EMPREENDEDOR')")
     public ResponseEntity<Void> updateEntrepreneur(@Valid @RequestBody UpdateProfileRequestDTO request) {
 
         entrepreneurService.updateEntrepreneurProfile(request);

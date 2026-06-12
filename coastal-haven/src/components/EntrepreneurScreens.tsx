@@ -2,8 +2,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { LucideIcon } from './LucideIcon';
 import { Review, UserRole } from '../types';
 import { IMAGES } from '../data';
-import { postServiceService, postEventService, PostServiceResponseDTO, PostEventResponseDTO } from '../services/api';
-import React, { useState } from 'react';
+import { postServiceService, postEventService, PostServiceResponseDTO, PostEventResponseDTO, entrepreneurService } from '../services/api';
+import React, { useRef, useState } from 'react';
 
 
 // --- SCREEN 8: ENTREPRENEUR PROFILE (BARRACA CÉU AZUL) ---
@@ -12,6 +12,8 @@ interface EntrepreneurProfileProps {
   onNavigate: (screen: string) => void;
   reviews: Review[];
   onLogout: () => void;
+  entrepreneurAvatar?: string; 
+  entrepreneurName?: string;
 }
 
 export const EntrepreneurProfileScreen: React.FC<EntrepreneurProfileProps> = ({
@@ -19,6 +21,8 @@ export const EntrepreneurProfileScreen: React.FC<EntrepreneurProfileProps> = ({
   onNavigate,
   reviews,
   onLogout,
+  entrepreneurAvatar,
+  entrepreneurName = 'Empreendedor'
 }) => {
   // Calculate average rating dynamically based on review length to show true interactive craftsmanship!
   const avgRating = reviews.length > 0 
@@ -42,11 +46,14 @@ export const EntrepreneurProfileScreen: React.FC<EntrepreneurProfileProps> = ({
         {/* Profile Info Summary */}
         <section className="px-8 py-4 flex items-center gap-6">
           <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white shadow-md relative">
-            <img src={IMAGES.barracaLogo} alt="Barraca Céu Azul" className="w-full h-full object-cover" />
-          </div>
+  {entrepreneurAvatar
+    ? <img src={entrepreneurAvatar} alt="Avatar" className="w-full h-full object-cover" />
+    : <img src={IMAGES.barracaLogo} alt="Barraca Céu Azul" className="w-full h-full object-cover" />
+  }
+</div>
           <div>
             <h1 className="text-2xl font-black text-gray-800 leading-tight">
-              Barraca Céu<br/>Azul
+              {entrepreneurName}
             </h1>
             <span className="text-[10px] bg-[#006a66]/20 text-[#006a66] font-extrabold px-2.5 py-0.5 rounded-full mt-1.5 inline-block">
               EMPREENDEDOR
@@ -462,100 +469,135 @@ export const UpdateEntrepreneurProfileScreen: React.FC<UpdateEntrepreneurProfile
   const [name, setName] = useState(currentName);
   const [email, setEmail] = useState(currentEmail);
   const [password, setPassword] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState(currentAvatar || ''); 
+  const [avatarUrl, setAvatarUrl] = useState(currentAvatar || '');
   const [loading, setLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setLoading(true);
+    try {
+      let finalAvatarUrl = avatarUrl;
 
-    setTimeout(() => {
-      onSave({ name, email, avatarUrl });
-      setLoading(false);
+      if (selectedFile) {
+        const uploadResult = await entrepreneurService.uploadAvatar(selectedFile);
+        finalAvatarUrl = uploadResult.imageUrl;
+      }
+
+      await entrepreneurService.updateProfile({
+        name,
+        password: password || undefined,
+        avatarUrl: finalAvatarUrl,
+      });
+
+      onSave({ name, email, avatarUrl: finalAvatarUrl });
       onBack();
-    }, 800);
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Erro ao atualizar perfil');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="w-full h-full bg-[#F8F4E8] text-gray-800 overflow-y-auto no-scrollbar pb-32 flex flex-col p-6">
-      <header className="pt-2 flex items-center justify-between">
-        <button 
+    <div className="w-full h-full bg-[#F8F4E8] text-gray-900 overflow-y-auto no-scrollbar pb-32 flex flex-col p-6">
+      
+      {/* Header */}
+      <header className="pt-2 flex items-center justify-between border-b border-gray-200 pb-4">
+        <button
           onClick={onBack}
-          className="p-1.5 hover:bg-black/5 rounded-full transition-colors cursor-pointer"
+          className="p-2 hover:bg-black/5 rounded-full transition-colors cursor-pointer"
         >
-          <LucideIcon name="ArrowLeft" size={22} className="text-gray-800" />
+          <LucideIcon name="ArrowLeft" size={20} className="text-gray-700" />
         </button>
-        <span className="text-[10px] bg-[#006a66]/20 text-[#006a66] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
-          Configurações do Negócio
-        </span>
-        <div className="w-8" />
+        <h1 className="text-sm font-black text-gray-800 uppercase tracking-wide">Configurações do Negócio</h1>
+        <div className="w-9" />
       </header>
 
+      {/* Avatar */}
       <section className="mt-8 flex flex-col items-center">
-        <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-white shadow-md bg-gray-200">
-          <img 
-            src={avatarUrl || "https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?auto=format&fit=crop&w=150&q=80"} 
-            alt="Logo do Empreendimento" 
-            className="w-full h-full object-cover" 
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            setSelectedFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => setAvatarUrl(reader.result as string);
+            reader.readAsDataURL(file);
+          }}
+        />
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-gray-200 cursor-pointer group"
+        >
+          <img
+            src={avatarUrl || 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?auto=format&fit=crop&w=150&q=80'}
+            alt="Logo do Empreendimento"
+            className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+          <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             <LucideIcon name="Camera" size={16} className="text-white" />
+            <span className="text-white text-[9px] font-bold mt-1">Alterar</span>
           </div>
         </div>
-        <h2 className="text-sm font-black text-gray-800 mt-3 uppercase tracking-tight">Foto / Logotipo</h2>
+        <p className="text-[11px] font-bold text-[#006a66] uppercase tracking-wider mt-3">Alterar Logo / Foto</p>
       </section>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-4 flex-grow font-sans">
-        <div className="bg-[#CBCBC1]/60 p-4 rounded-2xl shadow-sm">
-          <label className="text-[10px] font-extrabold text-gray-700 uppercase tracking-tight block mb-1">Nome Comercial / Responsável</label>
+      {/* Campos */}
+      <div className="mt-8 space-y-4 flex-grow">
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+          <label className="text-[9px] font-black text-gray-400 uppercase tracking-wider block mb-1">Nome do Negócio</label>
           <div className="flex items-center gap-3">
-            <LucideIcon name="Briefcase" size={16} className="text-gray-600" />
-            <input 
-              type="text" 
+            <LucideIcon name="Briefcase" size={16} className="text-gray-400" />
+            <input
+              type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full bg-transparent border-none outline-none text-xs font-bold text-gray-900"
+              className="w-full bg-transparent border-none outline-none text-xs font-bold text-gray-800"
               required
             />
           </div>
         </div>
 
-        <div className="bg-[#CBCBC1]/60 p-4 rounded-2xl shadow-sm">
-          <label className="text-[10px] font-extrabold text-gray-700 uppercase tracking-tight block mb-1">E-mail Corporativo</label>
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+          <label className="text-[9px] font-black text-gray-400 uppercase tracking-wider block mb-1">E-mail</label>
           <div className="flex items-center gap-3">
-            <LucideIcon name="Mail" size={16} className="text-gray-600" />
-            <input 
-              type="email" 
+            <LucideIcon name="Mail" size={16} className="text-gray-400" />
+            <input
+              type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full bg-transparent border-none outline-none text-xs font-bold text-gray-900"
-              required
+              className="w-full bg-transparent border-none outline-none text-xs font-bold text-gray-800"
             />
           </div>
         </div>
 
-        <div className="bg-[#CBCBC1]/60 p-4 rounded-2xl shadow-sm">
-          <label className="text-[10px] font-extrabold text-gray-700 uppercase tracking-tight block mb-1">Nova Senha</label>
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+          <label className="text-[9px] font-black text-gray-400 uppercase tracking-wider block mb-1">Nova Senha</label>
           <div className="flex items-center gap-3">
-            <LucideIcon name="Lock" size={16} className="text-gray-600" />
-            <input 
-              type="password" 
+            <LucideIcon name="Lock" size={16} className="text-gray-400" />
+            <input
+              type="password"
               value={password}
-              placeholder="Alterar senha antiga"
+              placeholder="••••••••"
               onChange={e => setPassword(e.target.value)}
-              className="w-full bg-transparent border-none outline-none text-xs font-bold text-gray-900"
+              className="w-full bg-transparent border-none outline-none text-xs font-bold text-gray-800"
             />
           </div>
         </div>
 
         <button
-          type="submit"
+          onClick={handleSubmit}
           disabled={loading}
-          className="w-full bg-[#006a66] hover:bg-[#00524f] text-white font-extrabold py-4 px-4 rounded-2xl text-xs uppercase tracking-wider shadow-md transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer mt-6"
+          className="w-full bg-[#006a66] hover:bg-[#00524f] text-white font-extrabold py-4 rounded-2xl text-xs uppercase tracking-wider shadow-md transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer mt-6"
         >
-          {loading ? 'Salvando Alterações...' : 'Salvar Dados da Empresa'}
+          {loading ? 'Salvando...' : 'Salvar Dados da Empresa'}
         </button>
-      </form>
+      </div>
     </div>
   );
 };

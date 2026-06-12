@@ -2,6 +2,8 @@ package br.com.uninassau.LEI.ConectaPraia.controller;
 
 import br.com.uninassau.LEI.ConectaPraia.dto.PostEventResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.dto.PostServiceResponseDTO;
+import br.com.uninassau.LEI.ConectaPraia.dto.RegisteredEventResponseDTO;
+import br.com.uninassau.LEI.ConectaPraia.dto.RegisteredServiceResponseDTO;
 import br.com.uninassau.LEI.ConectaPraia.service.RegisteredService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -24,15 +26,15 @@ public class RegisteredController {
     }
 
     @GetMapping("/events")
-    public ResponseEntity<List<PostEventResponseDTO>> getMyRegisteredEvents() {
-        List<PostEventResponseDTO> events = this.registeredService.findAllRegisteredEventsForTourist();
+    public ResponseEntity<List<RegisteredEventResponseDTO>> getMyRegisteredEvents() {
+        List<RegisteredEventResponseDTO> events = this.registeredService.findAllRegisteredEventsForTourist();
 
         return ResponseEntity.ok(events);
     }
 
     @GetMapping("/services")
-    public ResponseEntity<List<PostServiceResponseDTO>> getMyRegisteredServices() {
-        List<PostServiceResponseDTO> services = this.registeredService.findAllRegisteredServicesForTourist();
+    public ResponseEntity<List<RegisteredServiceResponseDTO>> getMyRegisteredServices() {
+        List<RegisteredServiceResponseDTO> services = this.registeredService.findAllRegisteredServicesForTourist();
 
         return ResponseEntity.ok(services);
     }

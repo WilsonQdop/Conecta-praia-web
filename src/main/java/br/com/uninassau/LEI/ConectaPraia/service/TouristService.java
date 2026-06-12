@@ -71,8 +71,11 @@ public class TouristService {
         Tourist tourist = (Tourist)  authUtil.getUserLoggedIn();
 
         tourist.setName(request.name());
-        tourist.setEmail(request.email());
-        tourist.setAvatarUrl(request.avatarUrl());
+
+
+        if (request.avatarUrl() != null) {
+            tourist.setProfilePictureUrl(request.avatarUrl());
+        }
 
         if (request.password() != null && !request.password().isBlank()) {
             String encodedPassword = passwordEncoder.encode(request.password());

@@ -24,15 +24,17 @@ public class EntrepreneurService {
         Entrepreneur entrepreneur = (Entrepreneur) authUtil.getUserLoggedIn();
 
         entrepreneur.setName(request.name());
-        entrepreneur.setEmail(request.email());
-        entrepreneur.setAvatarUrl(request.avatarUrl());
+
+        if (request.avatarUrl() != null) {
+            entrepreneur.setProfilePictureUrl(request.avatarUrl());
+        }
 
         if (request.password() != null && !request.password().isBlank()) {
             String encodedPassword = passwordEncoder.encode(request.password());
             entrepreneur.setPassword(encodedPassword);
         }
 
-        // 🟢 CORREÇÃO: Salva as alterações de fato no banco de dados
+
         entrepreneurRepository.save(entrepreneur);
     }
 }

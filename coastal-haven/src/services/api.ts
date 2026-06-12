@@ -1,7 +1,7 @@
 // src/services/api.ts
 import axios, { AxiosInstance } from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080'; // Ajuste conforme sua URL do backend
+const API_BASE_URL = 'http://localhost:8080'; 
 
 // Criar instância do axios
 const apiClient: AxiosInstance = axios.create({
@@ -16,7 +16,17 @@ apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   console.log('[INTERCEPTOR] URL:', config.url);
   console.log('[INTERCEPTOR] Token existe?', !!token);
+  
   if (token) {
+    // ✅ Decodifica e loga o conteúdo do JWT
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log('[INTERCEPTOR] Token payload:', payload);
+      console.log('[INTERCEPTOR] Authorities:', payload.authorities);
+    } catch (e) {
+      console.log('[INTERCEPTOR] Erro ao decodificar token');
+    }
+    
     config.headers.Authorization = `Bearer ${token}`;
     console.log('[INTERCEPTOR] Authorization header setado');
   } else {
@@ -56,9 +66,8 @@ export interface RegisterResponse {
 }
 
 // DTO para atualização de perfis (Campos opcionais para evitar sobrescrever com nulo)
-export interface UpdateProfileRequestDTO {
+interface UpdateProfileRequestDTO {
   name: string;
-  email: string;
   password?: string;
   avatarUrl?: string;
 }
@@ -101,14 +110,32 @@ export const authService = {
   },
 };
 
-// 🟢 NOVOS SERVIÇOS ADICIONADOS CONFORME REGRAS DO BACKEND
+export interface TouristSubscribeResponseDTO {
+  id: string;
+  title: string
+}
+
+export const subscriptionService = {
+  async subscribeToService(serviceId: string): Promise<TouristSubscribeResponseDTO> {
+    console.log('[API] Inscrevendo em serviço:', serviceId);
+    const response = await apiClient.post<TouristSubscribeResponseDTO>(
+      `/subscriptions/services/${serviceId}`
+    );
+    return response.data;
+  },
+  async subscribeToEvent(eventId: string): Promise<TouristSubscribeResponseDTO> {
+    console.log('[API] Agendando evento:', eventId);
+    const response = await apiClient.post<TouristSubscribeResponseDTO>(
+      `/subscriptions/events/${eventId}`
+    );
+    return response.data;
+  }
+};
 
 export const touristService = {
   async updateProfile(profileData: UpdateProfileRequestDTO): Promise<void> {
     try {
-      console.log('[API] PUT /tourist/update');
-      await apiClient.put('/tourist/update', profileData);
-      console.log('[API] ✅ Perfil do turista atualizado com sucesso');
+      await apiClient.put('/subscriptions/update', profileData);
     } catch (error) {
       console.error('Erro ao atualizar perfil do turista:', error);
       throw error;
@@ -117,17 +144,34 @@ export const touristService = {
 };
 
 export const entrepreneurService = {
-  async updateProfile(profileData: UpdateProfileRequestDTO): Promise<void> {
+
+async updateProfile(profileData: UpdateProfileRequestDTO): Promise<void> {
     try {
-      console.log('[API] PUT /empreendedor/update');
       await apiClient.put('/empreendedor/update', profileData);
-      console.log('[API] ✅ Perfil do empreendedor atualizado com sucesso');
     } catch (error) {
       console.error('Erro ao atualizar perfil do empreendedor:', error);
       throw error;
     }
+  },
+
+  async uploadAvatar(file: File): Promise<{ imageUrl: string }> {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await apiClient.post<{ imageUrl: string }>(
+        '/upload/avatar', // ✅ mesmo endpoint que o turista usa
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao fazer upload do avatar:', error);
+      throw error;
+    }
   }
-};
+}
+
+
 
 // ═══════════════════════════════════════════════════════════════
 // 📋 RESPONSES DTOs COMPARTILHADOS
@@ -295,54 +339,36 @@ export interface SubscribeResponse {
   title: string;
 }
 
-export const subscriptionService = {
-  async subscribeToService(serviceId: string): Promise<SubscribeResponse> {
-    try {
-      const response = await apiClient.post<SubscribeResponse>(`/subscriptions/services/${serviceId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao se inscrever no serviço:', error);
-      throw error;
-    }
-  },
-
-  async subscribeToEvent(eventId: string): Promise<SubscribeResponse> {
-    try {
-      const response = await apiClient.post<SubscribeResponse>(`/subscriptions/events/${eventId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao se inscrever no evento:', error);
-      throw error;
-    }
-  },
-};
 
 // ═══════════════════════════════════════════════════════════════
 // 📤 FILE UPLOAD SERVICES (EMPREENDEDOR)
 // ═══════════════════════════════════════════════════════════════
 
 export const uploadService = {
-  async uploadImage(postId: string, file: File): Promise<{ imageUrl: string }> {
+
+  
+
+   async uploadAvatar(file: File): Promise<{ imageUrl: string }> {
     try {
       const formData = new FormData();
       formData.append('image', file);
 
       const response = await apiClient.post<{ imageUrl: string }>(
-        `/upload/upload/${postId}`,
+        '/upload/avatar',
         formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
+        { headers: { 'Content-Type': 'multipart/form-data' } }
       );
       return response.data;
     } catch (error) {
-      console.error('Erro ao fazer upload:', error);
+      console.error('Erro ao fazer upload do avatar:', error);
       throw error;
     }
-  },
+  }
 };
+
+  
+
+
 
 // ═══════════════════════════════════════════════════════════════
 // 🔽 POSTS FETCH SERVICES
@@ -430,6 +456,7 @@ export const postEventService = {
       throw error;
     }
   },
+   
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -460,7 +487,7 @@ export const adminService = {
       throw error;
     }
   },
-  
+
   async getAllServices(): Promise<PostServiceResponseDTO[]> {
     try {
       const response = await apiClient.get<PostServiceResponseDTO[]>('/admin/all-services');
@@ -513,32 +540,41 @@ export const adminService = {
 // 🎫 REGISTERED SUBSCRIPTIONS
 // ═══════════════════════════════════════════════════════════════
 
-export const registeredEvent = {
-  async getMyRegisteredEvents(): Promise<PostEventResponseDTO[]> {
-    try {
-      const response = await apiClient.get<PostEventResponseDTO[]>('/registered/events');
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
+export interface RegisteredEventResponseDTO {
+  id: string;
+  title: string;
+  eventType: string;
+  location: string;
+  valueDescription: string;
+  dateHour: string;
+  entrepreneurName: string;
+}
 
-  async getMyRegisteredServices(): Promise<PostServiceResponseDTO[]> {
-    try {
-      const response = await apiClient.get<PostServiceResponseDTO[]>('/registered/services');
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-};
+export interface RegisteredServiceResponseDTO {
+  id: string;
+  title: string;
+  serviceType: string;
+  location: string;
+  valueDescription: string;
+  dateHour: string;
+  entrepreneurName: string;
+}
 
 export const registeredService = {
-  async listMyRegisteredEvents(): Promise<PostEventResponseDTO[]> {
-    return registeredEvent.getMyRegisteredEvents();
+  async listMyRegisteredEvents(): Promise<RegisteredEventResponseDTO[]> {
+    const response = await apiClient.get<RegisteredEventResponseDTO[]>('/registered/events');
+    return response.data;
   },
-  async listMyRegisteredServices(): Promise<PostServiceResponseDTO[]> {
-    return registeredEvent.getMyRegisteredServices();
+  async listMyRegisteredServices(): Promise<RegisteredServiceResponseDTO[]> {
+    const response = await apiClient.get<RegisteredServiceResponseDTO[]>('/registered/services');
+    return response.data;
+  },
+
+   async cancelEventRegistration(eventId: string): Promise<void> {
+    await apiClient.delete(`/registered/events/${eventId}`);
+  },
+  async cancelServiceRegistration(serviceId: string): Promise<void> {
+    await apiClient.delete(`/registered/services/${serviceId}`);
   }
 };
 

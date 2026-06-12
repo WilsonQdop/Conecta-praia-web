@@ -17,6 +17,7 @@ public abstract class User {
     private String email;
     private String cpf;
     private String phone;
+    @Column(columnDefinition = "TEXT")
     private String ProfilePictureUrl;
 
     public String getProfilePictureUrl() {

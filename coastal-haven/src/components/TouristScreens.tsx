@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LucideIcon } from './LucideIcon';
 import { LocalActivity, Appointment, Review } from '../types';
 import { ACTIVITIES, IMAGES } from '../data';
-import { registeredService } from '../services/api';
-import { adminService } from '../services/api';
+import { PostEventResponseDTO, postEventService, PostServiceResponseDTO, postServiceService, registeredService, subscriptionService, touristService, uploadService } from '../services/api';
+import { adminService,} from '../services/api';
 
 // =================================================================
 // 🧭 COMPONENTE: BOTTOM TAB NAV BAR (COMPARTILHADO)
@@ -262,6 +262,7 @@ export const EventsAndServicesScreen: React.FC<EventsAndServicesProps> = ({ onNa
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+
   // ════════════════════════════════════════════════════════════════
   // 📥 CARREGAR ATIVIDADES DO BANCO DE DADOS (AGORA VIA ADMIN SERVICE)
   // ════════════════════════════════════════════════════════════════
@@ -421,52 +422,121 @@ export const EventsAndServicesScreen: React.FC<EventsAndServicesProps> = ({ onNa
 // =================================================================
 // 🏄‍♂️ TELA: EVENT DETAILS (DETALHES DO EVENTO)
 // =================================================================
-interface EventDetailProps {
-  activityId: string;
-  onBack: () => void;
-  onNavigate: (screen: string) => void;
-  onEvaluate: () => void;
-  onRegisterAppointment: (activity: LocalActivity) => void;
-  isFavorited: boolean;
-  onToggleFavorite: (id: string) => void;
-  activities?: LocalActivity[];
-}
-
 export const EventDetailScreen: React.FC<EventDetailProps> = ({
-  activityId, onBack, onNavigate, onEvaluate, onRegisterAppointment, isFavorited, onToggleFavorite, activities
+  activityId, onBack, onNavigate, onEvaluate, onRegisterAppointment, isFavorited, onToggleFavorite
 }) => {
-  const actList = activities || ACTIVITIES;
-  const activity = actList.find(a => a.id === activityId) || actList[0];
+  const [eventData, setEventData] = React.useState<PostEventResponseDTO | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    adminService.getAllEvents()
+      .then(events => {
+        const found = events.find(e => e.id === activityId);
+        setEventData(found || null);
+      })
+      .catch(() => setEventData(null))
+      .finally(() => setLoading(false));
+  }, [activityId]);
+
+  if (loading) return (
+    <div className="w-full h-full bg-[#fbf9f8] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#006a66]" />
+    </div>
+  );
+
+  if (!eventData) return (
+    <div className="w-full h-full bg-[#fbf9f8] flex items-center justify-center">
+      <p className="text-xs text-gray-400">Evento não encontrado.</p>
+    </div>
+  );
 
   return (
     <div className="relative w-full h-full text-gray-900 bg-[#fbf9f8] overflow-y-auto no-scrollbar pb-32">
-      <header className="fixed top-15 left-0 right-0 z-50 px-4 py-2 flex justify-between items-center bg-transparent">
-        <button onClick={onBack} className="bg-white/95 p-2 rounded-full shadow-md text-gray-800 cursor-pointer">
+      
+      <header className="fixed top-4 left-0 right-0 z-50 px-4 flex justify-between items-center">
+        <button onClick={onBack} className="bg-white/95 p-2 rounded-full shadow-md cursor-pointer">
           <LucideIcon name="ArrowLeft" size={20} />
         </button>
-        <div className="flex gap-2">
-          <button onClick={() => onToggleFavorite(activity.id)} className="bg-white/95 p-2 rounded-full shadow-md cursor-pointer">
-            <LucideIcon name="Heart" size={18} className={isFavorited ? "text-red-500 fill-current" : "text-gray-700"} />
-          </button>
-        </div>
+        <button onClick={() => onToggleFavorite(activityId)} className="bg-white/95 p-2 rounded-full shadow-md cursor-pointer">
+          <LucideIcon name="Heart" size={18} className={isFavorited ? "text-red-500 fill-current" : "text-gray-700"} />
+        </button>
       </header>
 
-      <section className="h-[280px] w-full relative">
-        <img src={IMAGES.surfMapDetail} alt="Mapa" className="w-full h-full object-cover" />
-      </section>
-
-      <section className="relative z-10 -mt-10 px-4">
-        <div className="bg-[#f0eded]/95 rounded-t-[32px] shadow-2xl p-6 flex flex-col items-center">
-          <h1 className="text-2xl font-black text-gray-900 text-center mb-6">{activity.title}</h1>
-          <div className="w-full bg-[#e4e2e1] rounded-2xl p-5 space-y-4 mb-6">
-            <p className="text-xs text-gray-700 text-center">{activity.details}</p>
-          </div>
-          <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-            <button onClick={onEvaluate} className="bg-[#80d6d1] font-bold py-3 px-4 rounded-full text-sm cursor-pointer">Avaliar</button>
-            <button onClick={() => { onRegisterAppointment(activity); alert('Inscrição efetuada!'); }} className="bg-[#006a66] text-white font-bold py-3 px-4 rounded-full text-sm cursor-pointer">Inscrever</button>
-          </div>
+      <section className="h-[280px] w-full relative bg-gray-200">
+        <img
+          src={eventData.imageUrl || IMAGES.surfMapDetail}
+          alt={eventData.title}
+          className="w-full h-full object-cover"
+          onError={(e) => { (e.target as HTMLImageElement).src = IMAGES.surfMapDetail; }}
+        />
+        <div className="absolute bottom-4 left-4">
+          <span className="bg-purple-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase">
+            {eventData.eventType}
+          </span>
         </div>
       </section>
+
+      <section className="relative z-10 -mt-6 px-4">
+        <div className="bg-white rounded-t-[32px] shadow-2xl p-6">
+          
+          <h1 className="text-2xl font-black text-gray-900 text-center mb-1">{eventData.title}</h1>
+          <p className="text-xs text-center text-gray-400 font-semibold mb-6">por {eventData.entrepreneurName}</p>
+
+          <div className="bg-[#f7f3e9] rounded-2xl p-5 space-y-3 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-[#80d6d1]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <LucideIcon name="MapPin" size={14} className="text-[#006a66]" />
+              </div>
+              <div>
+                <p className="text-[9px] font-black text-gray-400 uppercase">Local</p>
+                <p className="text-xs font-bold text-gray-800">{eventData.location}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-[#80d6d1]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <LucideIcon name="Calendar" size={14} className="text-[#006a66]" />
+              </div>
+              <div>
+                <p className="text-[9px] font-black text-gray-400 uppercase">Data</p>
+                <p className="text-xs font-bold text-gray-800">
+                  {new Date(eventData.dateHour || eventData.createdAt).toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-[#80d6d1]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <LucideIcon name="DollarSign" size={14} className="text-[#006a66]" />
+              </div>
+              <div>
+                <p className="text-[9px] font-black text-gray-400 uppercase">Valor</p>
+                <p className="text-xs font-bold text-gray-800">{eventData.valueDescription}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <p className="text-[9px] font-black text-gray-400 uppercase mb-2">Descrição</p>
+            <p className="text-xs text-gray-600 leading-relaxed">{eventData.description}</p>
+          </div>
+
+          <button
+            onClick={async () => {
+              try {
+                await subscriptionService.subscribeToEvent(eventData.id);
+                alert('Agendamento realizado! Veja em Reservas.');
+              } catch (e: any) {
+                alert(e.response?.data?.message || 'Erro ao agendar');
+              }
+            }}
+            className="w-full bg-[#006a66] text-white font-black py-3.5 px-4 rounded-2xl text-xs uppercase tracking-wide cursor-pointer"
+          >
+            Agendar
+          </button>
+        </div>
+      </section>
+
       <BottomTabNav activeScreen="map" onNavigate={onNavigate} />
     </div>
   );
@@ -475,47 +545,125 @@ export const EventDetailScreen: React.FC<EventDetailProps> = ({
 // =================================================================
 // 🦐 TELA: SERVICE DETAILS (DETALHES DO SERVIÇO)
 // =================================================================
-interface ServiceDetailProps {
-  activityId: string;
-  onBack: () => void;
-  onNavigate: (screen: string) => void;
-  onEvaluate: () => void;
-  onAddReminder: (activity: LocalActivity) => void;
-  isFavorited: boolean;
-  onToggleFavorite: (id: string) => void;
-  activities?: LocalActivity[];
-}
-
 export const ServiceDetailScreen: React.FC<ServiceDetailProps> = ({
-  activityId, onBack, onNavigate, onEvaluate, onAddReminder, isFavorited, onToggleFavorite, activities
+  activityId, onBack, onNavigate, onEvaluate, onAddReminder, isFavorited, onToggleFavorite
 }) => {
-  const actList = activities || ACTIVITIES;
-  const activity = actList.find(a => a.id === activityId) || actList[3];
+  const [serviceData, setServiceData] = React.useState<PostServiceResponseDTO | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    adminService.getAllServices()
+      .then(services => {
+        const found = services.find(s => s.id === activityId);
+        setServiceData(found || null);
+      })
+      .catch(() => setServiceData(null))
+      .finally(() => setLoading(false));
+  }, [activityId]);
+
+  if (loading) return (
+    <div className="w-full h-full bg-[#fbf9f8] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#006a66]" />
+    </div>
+  );
+
+  if (!serviceData) return (
+    <div className="w-full h-full bg-[#fbf9f8] flex items-center justify-center">
+      <p className="text-xs text-gray-400">Serviço não encontrado.</p>
+    </div>
+  );
 
   return (
     <div className="relative w-full h-full text-gray-900 bg-[#fbf9f8] overflow-y-auto no-scrollbar pb-32">
-      <header className="fixed top-2 left-0 right-0 z-50 px-4 py-2 flex justify-between items-center bg-transparent">
-        <button onClick={onBack} className="bg-white/95 p-2 rounded-full shadow-md text-gray-800 cursor-pointer">
+
+      <header className="fixed top-4 left-0 right-0 z-50 px-4 flex justify-between items-center">
+        <button onClick={onBack} className="bg-white/95 p-2 rounded-full shadow-md cursor-pointer">
           <LucideIcon name="ArrowLeft" size={20} />
+        </button>
+        <button onClick={() => onToggleFavorite(activityId)} className="bg-white/95 p-2 rounded-full shadow-md cursor-pointer">
+          <LucideIcon name="Heart" size={18} className={isFavorited ? "text-red-500 fill-current" : "text-gray-700"} />
         </button>
       </header>
 
-      <section className="h-[280px] w-full relative">
-        <img src={IMAGES.peixadaMapDetail} alt="Mapa" className="w-full h-full object-cover" />
-      </section>
-
-      <section className="relative z-10 -mt-10 px-4">
-        <div className="bg-[#f8f5f0] rounded-t-[40px] shadow-2xl p-6 flex flex-col items-center">
-          <h1 className="text-2xl font-black text-gray-900 text-center mb-4">{activity.title}</h1>
-          <div className="w-full bg-[#e6e2da]/60 rounded-3xl p-5 mb-6">
-            <p className="text-xs text-gray-600 text-center">{activity.details}</p>
-          </div>
-          <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-            <button onClick={() => { onAddReminder(activity); alert('Lembrete salvo!'); }} className="bg-[#80d6d1] font-bold py-3.5 px-4 rounded-xl text-xs uppercase cursor-pointer">Lembrar-me</button>
-            <button onClick={onEvaluate} className="bg-[#006a66] text-white font-bold py-3.5 px-4 rounded-xl text-xs uppercase cursor-pointer">Avaliar</button>
-          </div>
+      <section className="h-[280px] w-full relative bg-gray-200">
+        <img
+          src={serviceData.imageUrl || IMAGES.peixadaMapDetail}
+          alt={serviceData.title}
+          className="w-full h-full object-cover"
+          onError={(e) => { (e.target as HTMLImageElement).src = IMAGES.peixadaMapDetail; }}
+        />
+        <div className="absolute bottom-4 left-4">
+          <span className="bg-[#006a66] text-white text-[10px] font-black px-3 py-1 rounded-full uppercase">
+            {serviceData.serviceType}
+          </span>
         </div>
       </section>
+
+      <section className="relative z-10 -mt-6 px-4">
+        <div className="bg-white rounded-t-[32px] shadow-2xl p-6">
+
+          <h1 className="text-2xl font-black text-gray-900 text-center mb-1">{serviceData.title}</h1>
+          <p className="text-xs text-center text-gray-400 font-semibold mb-6">por {serviceData.entrepreneurName}</p>
+
+          <div className="bg-[#f7f3e9] rounded-2xl p-5 space-y-3 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-[#80d6d1]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <LucideIcon name="MapPin" size={14} className="text-[#006a66]" />
+              </div>
+              <div>
+                <p className="text-[9px] font-black text-gray-400 uppercase">Local</p>
+                <p className="text-xs font-bold text-gray-800">{serviceData.location}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-[#80d6d1]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <LucideIcon name="Calendar" size={14} className="text-[#006a66]" />
+              </div>
+              <div>
+                <p className="text-[9px] font-black text-gray-400 uppercase">Data</p>
+                <p className="text-xs font-bold text-gray-800">
+                  {new Date(serviceData.dateHour || serviceData.createdAt).toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-[#80d6d1]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <LucideIcon name="DollarSign" size={14} className="text-[#006a66]" />
+              </div>
+              <div>
+                <p className="text-[9px] font-black text-gray-400 uppercase">Valor</p>
+                <p className="text-xs font-bold text-gray-800">{serviceData.valueDescription}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <p className="text-[9px] font-black text-gray-400 uppercase mb-2">Descrição</p>
+            <p className="text-xs text-gray-600 leading-relaxed">{serviceData.description}</p>
+          </div>
+
+          <button
+           onClick={async () => {
+    try {
+      console.log('[DEBUG] Tentando se inscrever em:', serviceData.id);
+      await subscriptionService.subscribeToService(serviceData.id);
+      console.log('[DEBUG] Inscrição realizada com sucesso!');
+      alert('Inscrição realizada! Veja em Reservas.');
+    } catch (e: any) {
+      console.error('[ERROR] Erro ao se inscrever:', e);
+      console.error('[ERROR] Response:', e.response?.data);
+      alert(e.response?.data?.message || 'Erro ao se inscrever');
+    }
+            }}
+            className="w-full bg-[#006a66] text-white font-black py-3.5 px-4 rounded-2xl text-xs uppercase tracking-wide cursor-pointer"
+          >
+            Inscrever
+          </button>
+        </div>
+      </section>
+
       <BottomTabNav activeScreen="map" onNavigate={onNavigate} />
     </div>
   );
@@ -573,31 +721,49 @@ export const AppointmentsScreen: React.FC<AppointmentsProps> = ({ onNavigate, ap
   const [selectedFilter, setSelectedFilter] = useState<'Todas' | 'Eventos' | 'Serviços'>('Todas');
   const [loading, setLoading] = useState(true);
   const [registeredItems, setRegisteredItems] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadRegisteredItems = async () => {
       try {
         setLoading(true);
+        setError(null);
+        console.log('[APPOINTMENTS] Carregando inscrições do turista...');
+
         const [eventsResponse, servicesResponse] = await Promise.all([
           registeredService.listMyRegisteredEvents(),
           registeredService.listMyRegisteredServices()
         ]);
 
         const eventsData = eventsResponse.map((evt: any) => ({
-          id: evt.id, title: evt.title, type: 'Eventos', icon: 'Ticket' as const,
+          id: evt.id,
+          title: evt.title,
+          type: 'Eventos',
+          icon: 'Ticket' as const,
           date: new Date(evt.dateHour || evt.createdAt).toLocaleDateString('pt-BR'),
-          location: evt.location, organizer: evt.entrepreneurName, price: evt.valueDescription || `R$ ${evt.value}`
+          location: evt.location,
+          organizer: evt.entrepreneurName,
+          price: evt.valueDescription || `R$ ${evt.value}`,
+          eventType: evt.eventType
         }));
 
         const servicesData = servicesResponse.map((srv: any) => ({
-          id: srv.id, title: srv.title, type: 'Serviços', icon: 'Briefcase' as const,
+          id: srv.id,
+          title: srv.title,
+          type: 'Serviços',
+          icon: 'Briefcase' as const,
           date: new Date(srv.dateHour || srv.createdAt).toLocaleDateString('pt-BR'),
-          location: srv.location, organizer: srv.entrepreneurName, price: srv.valueDescription || `R$ ${srv.value}`
+          location: srv.location,
+          organizer: srv.entrepreneurName,
+          price: srv.valueDescription || `R$ ${srv.value}`,
+          serviceType: srv.serviceType
         }));
 
         setRegisteredItems([...eventsData, ...servicesData]);
-      } catch (error) {
-        console.error(error);
+        console.log('[APPOINTMENTS] Total de inscrições:', eventsData.length + servicesData.length);
+      } catch (err: any) {
+        console.error('[APPOINTMENTS] Erro ao carregar:', err);
+        setError(err.response?.data?.message || 'Erro ao carregar suas inscrições');
       } finally {
         setLoading(false);
       }
@@ -605,40 +771,136 @@ export const AppointmentsScreen: React.FC<AppointmentsProps> = ({ onNavigate, ap
     loadRegisteredItems();
   }, []);
 
-  const filteredItems = registeredItems.filter(item => selectedFilter === 'Todas' ? true : item.type === selectedFilter);
+  const filteredItems = registeredItems.filter(item => 
+    selectedFilter === 'Todas' ? true : item.type === selectedFilter
+  );
+
+  const handleCancelAppointment = async (id: string, type: 'Eventos' | 'Serviços') => {
+  if (window.confirm('Tem certeza que deseja cancelar esta inscrição?')) {
+    try {
+      console.log('[CANCEL] Cancelando', type, 'com ID:', id);
+      
+      // Chama o endpoint correto baseado no tipo
+      if (type === 'Eventos') {
+        await registeredService.cancelEventRegistration(id);
+      } else {
+        await registeredService.cancelServiceRegistration(id);
+      }
+      
+      // Remove do estado local
+      setRegisteredItems(prev => prev.filter(i => i.id !== id));
+      alert('Inscrição cancelada com sucesso!');
+    } catch (error: any) {
+      console.error('[CANCEL] Erro:', error);
+      alert(error.response?.data?.message || 'Erro ao cancelar inscrição');
+    }
+  }
+};
 
   return (
     <div className="w-full h-full text-gray-900 bg-[#fbf9f8] overflow-y-auto no-scrollbar pb-32">
-      <header className="sticky top-0 bg-[#fbf9f8]/90 backdrop-blur-md z-10 px-6 pt-6 pb-4 border-b border-gray-100 flex justify-between items-center">
-        <div>
-          <span className="text-[10px] font-black text-[#006a66] uppercase">Turista</span>
-          <h1 className="text-xl font-black">Minhas Inscrições</h1>
+      {/* Header fixo */}
+      <header className="sticky top-0 bg-[#fbf9f8]/90 backdrop-blur-md z-10 px-6 pt-6 pb-4 border-b border-gray-100">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <span className="text-[10px] font-black tracking-widest text-[#006a66] uppercase">Turista</span>
+            <h1 className="text-xl font-black text-gray-900">Minhas Inscrições</h1>
+          </div>
+          <div className="bg-[#80d6d1]/20 p-2 rounded-full text-[#006a66]">
+            <LucideIcon name="CalendarCheck" size={20} />
+          </div>
+        </div>
+
+        {/* Botões de Filtro */}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+          {(['Todas', 'Eventos', 'Serviços'] as const).map(f => (
+            <button
+              key={f}
+              onClick={() => setSelectedFilter(f)}
+              className={`px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                selectedFilter === f
+                  ? 'bg-[#006a66] text-white shadow-sm'
+                  : 'bg-white border border-gray-100 text-gray-500'
+              }`}
+            >
+              {f}
+            </button>
+          ))}
         </div>
       </header>
 
+      {/* Conteúdo */}
       <div className="px-6 space-y-4 mt-4">
         {loading ? (
-          <p className="text-xs text-center text-gray-400">Carregando dados...</p>
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#006a66] mx-auto mb-3"></div>
+            <p className="text-xs text-gray-400 font-medium">Carregando suas inscrições...</p>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center">
+            <p className="text-xs text-red-700 font-bold">⚠️ {error}</p>
+          </div>
         ) : filteredItems.length === 0 ? (
-          <div className="text-center p-8 bg-white rounded-2xl border">
-            <p className="text-xs text-gray-400 mb-4">Nenhuma inscrição encontrada.</p>
-            <button onClick={onExplore} className="bg-[#80d6d1] font-bold text-xs px-4 py-2 rounded-full cursor-pointer">Explorar</button>
+          <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 p-6">
+            <LucideIcon name="CalendarCheck" size={32} className="text-gray-300 mx-auto mb-2" />
+            <p className="text-xs font-bold text-gray-400 mb-4">Nenhuma inscrição encontrada.</p>
+            <button 
+              onClick={onExplore}
+              className="bg-[#80d6d1] text-white font-bold text-xs px-4 py-2 rounded-full cursor-pointer hover:bg-[#006a66] transition-colors"
+            >
+              Explorar Atividades
+            </button>
           </div>
         ) : (
           filteredItems.map(item => (
-            <div key={item.id} className="bg-white rounded-2xl p-4 border relative">
-              <h4 className="text-sm font-black">{item.title}</h4>
-              <p className="text-[11px] text-gray-400">{item.organizer} — {item.date}</p>
-              <button onClick={() => { onCancelAppointment(item.id); setRegisteredItems(prev => prev.filter(i => i.id !== item.id)); }} className="text-red-500 text-xs font-bold mt-2 cursor-pointer block ml-auto">Cancelar</button>
+            <div
+              key={item.id}
+              className="bg-white rounded-2xl p-4 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-gray-200 transition-all"
+            >
+              {/* Badge tipo */}
+              <div className="flex justify-between items-start mb-2">
+                <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase ${
+                  item.type === 'Eventos'
+                    ? 'bg-purple-50 text-purple-600'
+                    : 'bg-teal-50 text-[#006a66]'
+                }`}>
+                  {item.type === 'Eventos' ? 'EVENTO' : 'SERVIÇO'}
+                </span>
+                <span className="text-xs font-black text-[#006a66]">{item.price}</span>
+              </div>
+
+              {/* Info */}
+              <h4 className="text-sm font-black text-gray-900 mb-1">{item.title}</h4>
+              <p className="text-[11px] text-gray-400 font-medium mb-3">por {item.organizer}</p>
+
+              {/* Detalhes */}
+              <div className="flex gap-3 mb-3 pt-3 border-t border-gray-50 text-[10px] text-gray-500 font-semibold">
+                <div className="flex items-center gap-1">
+                  <LucideIcon name="Calendar" size={12} />
+                  <span>{item.date}</span>
+                </div>
+                <div className="flex items-center gap-1 truncate">
+                  <LucideIcon name="MapPin" size={12} />
+                  <span className="truncate">{item.location}</span>
+                </div>
+              </div>
+
+              {/* Botão Cancelar */}
+              <button
+                onClick={() => handleCancelAppointment(item.id, item.type)}
+                className="w-full text-red-500 border border-red-200 bg-red-50 hover:bg-red-500 hover:text-white text-xs font-bold py-2 rounded-xl cursor-pointer transition-all active:scale-[0.98]"
+              >
+                Cancelar Inscrição
+              </button>
             </div>
           ))
         )}
       </div>
+
       <BottomTabNav activeScreen="appointments" onNavigate={onNavigate} />
     </div>
   );
 };
-
 
 
 interface TouristProfileProps {
@@ -646,13 +908,15 @@ interface TouristProfileProps {
   onLogout: () => void;
   onNavigate: (screen: string) => void;
   touristName?: string;
+  touristAvatar?: string;
 }
 
 export const TouristProfileScreen: React.FC<TouristProfileProps> = ({ 
   onBack, 
   onLogout, 
   onNavigate,
-  touristName = 'Viajante'
+  touristName = 'Viajante',
+  touristAvatar
 }) => {
   return (
     <div className="w-full h-full bg-[#fbf9f8] text-gray-800 overflow-y-auto no-scrollbar pb-32 flex flex-col p-6">
@@ -675,12 +939,15 @@ export const TouristProfileScreen: React.FC<TouristProfileProps> = ({
 
       {/* Perfil Identity (Estilo ADM) */}
       <section className="mt-10 flex items-center gap-6">
-        <div className="w-24 h-24 bg-[#80d6d1]/20 rounded-full flex items-center justify-center relative shadow-inner border-2 border-white">
-          <LucideIcon name="User" size={48} className="text-[#006a66]" />
-          <span className="absolute bottom-1 right-1 bg-[#006a66] text-white p-1.5 rounded-full border-2 border-[#fbf9f8] shadow-sm">
-            <LucideIcon name="MapPin" size={12} fill="currentColor" />
-          </span>
-        </div>
+   <div className="w-24 h-24 rounded-full relative border-2 border-white shadow-inner overflow-hidden flex-shrink-0">
+  {touristAvatar 
+    ? <img src={touristAvatar} alt="Avatar" className="w-full h-full object-cover" />
+    : <LucideIcon name="User" size={48} className="text-[#006a66]" />
+  }
+  <span className="absolute bottom-1 right-1 bg-[#006a66] text-white p-1.5 rounded-full border-2 border-[#fbf9f8] shadow-sm z-10">
+    <LucideIcon name="MapPin" size={12} fill="currentColor" />
+  </span>
+</div>
 
         <div className="flex flex-col">
           <h1 className="text-2xl font-black text-gray-900 leading-tight">
@@ -727,7 +994,7 @@ export const TouristProfileScreen: React.FC<TouristProfileProps> = ({
         {/* Botão de Editar Dados - Inserir no Perfil do Turista */}
 <div className="px-6 mt-4">
   <button 
-    onClick={() => /* Altere o estado de navegação para abrir a UpdateTouristProfileScreen */ console.log('Ir para update')}
+    onClick={() => onNavigate('update_tourist_profile')}
     className="w-full bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 font-bold py-3 px-4 rounded-2xl text-xs uppercase tracking-wider shadow-sm flex items-center justify-between transition-all active:scale-[0.98] cursor-pointer"
   >
     <div className="flex items-center gap-3">
@@ -777,7 +1044,7 @@ interface UpdateTouristProfileProps {
   currentName: string;
   currentEmail: string;
   currentAvatar?: string;
-  onSave: (updatedData: { name: string; email: string; avatarUrl: string }) => void;
+  onSave: (updatedData: { name: string; avatarUrl: string }) => void;
 }
 
 export const UpdateTouristProfileScreen: React.FC<UpdateTouristProfileProps> = ({
@@ -792,18 +1059,36 @@ export const UpdateTouristProfileScreen: React.FC<UpdateTouristProfileProps> = (
   const [password, setPassword] = useState('');
   const [avatarUrl, setAvatarUrl] = useState(currentAvatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80');
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    // Simulação da chamada da API
-    setTimeout(() => {
-      onSave({ name, email, avatarUrl });
-      setLoading(false);
-      onBack();
-    }, 800);
-  };
+  // Troque o form por div e o button type="submit" por onClick
+const handleSubmit = async () => {
+  setLoading(true);
+  try {
+    let finalAvatarUrl = avatarUrl;
+
+    if (selectedFile) {
+      const uploadResult = await uploadService.uploadAvatar(selectedFile);
+      finalAvatarUrl = uploadResult.imageUrl;
+    }
+
+    await touristService.updateProfile({
+      name,
+      password: password || undefined,
+      avatarUrl: finalAvatarUrl
+    });
+
+    console.log('[DEBUG] onSave sendo chamado com:', { name, avatarUrl: finalAvatarUrl }); // ✅
+    onSave({ name, avatarUrl: finalAvatarUrl });
+    onBack();
+  } catch (error: any) {
+    alert(error.response?.data?.message || 'Erro ao atualizar perfil');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="w-full h-full bg-[#fbf9f8] text-gray-900 overflow-y-auto no-scrollbar pb-32 flex flex-col p-6">
@@ -821,12 +1106,36 @@ export const UpdateTouristProfileScreen: React.FC<UpdateTouristProfileProps> = (
 
       {/* Foto de Perfil do Turista */}
       <section className="mt-8 flex flex-col items-center">
-        <div className="relative w-24 h-24 rounded-full border-4 border-white shadow-md overflow-hidden group">
-          <img src={avatarUrl} alt="Avatar Turista" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <LucideIcon name="Camera" size={18} className="text-white" />
-          </div>
-        </div>
+        <div className="flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  
+  // ✅ Guarda o arquivo para upload
+  setSelectedFile(file);
+  
+  // ✅ Mantém o preview local com base64
+  const reader = new FileReader();
+  reader.onloadend = () => setAvatarUrl(reader.result as string);
+  reader.readAsDataURL(file);
+}}
+              />
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="relative w-24 h-24 rounded-full border-4 border-white shadow-md overflow-hidden group cursor-pointer"
+              >
+                <img src={avatarUrl} alt="Avatar Turista" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <LucideIcon name="Camera" size={18} className="text-white" />
+                  <span className="text-white text-[9px] font-bold mt-1">Alterar</span>
+                </div>
+              </div>
+              </div>
         <p className="text-[11px] font-bold text-[#006a66] uppercase tracking-wider mt-3">Alterar Foto de Perfil</p>
       </section>
 
@@ -875,7 +1184,7 @@ export const UpdateTouristProfileScreen: React.FC<UpdateTouristProfileProps> = (
         </div>
 
         <button
-          type="submit"
+          onClick={handleSubmit}
           disabled={loading}
           className="w-full bg-[#006a66] hover:bg-[#00524f] text-white font-extrabold py-4 rounded-2xl text-xs uppercase tracking-wider shadow-md transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer mt-6"
         >

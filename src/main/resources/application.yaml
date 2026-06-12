@@ -1,5 +1,11 @@
 #Futuramente para Deploy, aprender um jeito que guarda essas informações sem prejudicar a segurança
 spring:
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
   application:
     name: ConectaPraia
 
@@ -11,7 +17,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -25,3 +31,7 @@ app:
   admin:
     password: ${INITIAL_ADMIN_PASSWORD:senha123!}
     email: ${INITIAL_ADMIN_EMAIL:admin@wilson.com}
+
+
+
+

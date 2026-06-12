@@ -49,6 +49,7 @@ export interface AppState {
   currentUserEmail: string;
   currentUserName: string;
   currentScreen: string; // welcome, login, register, role_select, search, map, event_detail, service_detail, entrepreneur_profile, reviews_mgmt, admin_profile, appointments, events_services
+    currentUserAvatar: string;
   
   selectedActivityId: string | null;
   ratingModalType: 'evento' | 'servico' | null;

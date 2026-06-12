@@ -35,4 +35,11 @@ public class UploadFilesController {
 
         return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
     }
+
+    @PreAuthorize("hasAnyRole('TURISTA', 'EMPREENDEDOR', 'ADMIN')")
+    @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, String>> uploadAvatar(@RequestPart("image") MultipartFile image) {
+        String imageUrl = uploadFilesService.saveImagesFiles(image);
+        return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
+    }
 }
